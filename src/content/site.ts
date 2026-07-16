@@ -36,12 +36,22 @@ export const site = {
   brand: "DRIVEKARE",
   slogan: "Care that comes to you",
   domain: "drivekare.com",
-  phone: "(555) 555-0199",
-  email: "hello@drivekare.com",
+  phone: "(770) 555-0142",
+  phoneHref: "tel:+17705550142",
+  email: "kwamiekaze@gmail.com",
+  region: "Douglasville & Metro Atlanta",
   meta: {
     title: "DriveKare — Care That Comes To You",
     description:
-      "Luxury mobile auto care. Detailing, oil changes, tires, batteries, and diagnostics — care that comes to you.",
+      "Luxury mobile auto care serving Douglasville & Metro Atlanta. Detailing, oil changes, tires, batteries, and diagnostics — care that comes to you.",
+  },
+  bottom: {
+    eyebrow: "CARE THAT COMES TO YOU",
+    headline: "We don't just service cars. We keep your life moving.",
+    line: "Serving Douglasville & Metro Atlanta",
+    scheduleLabel: "Call to schedule",
+    cta: "Book your service",
+    microcopy: "© 2026 DriveKare. Care that comes to you.",
   },
   splash: {
     wordmark: "DRIVEKARE",
