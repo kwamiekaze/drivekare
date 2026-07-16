@@ -267,7 +267,9 @@ export function ContactOverlay() {
 
 export function BookOverlay() {
   const { active, close } = useOverlay();
-  const [form, setForm] = useState({ full_name: "", phone: "", email: "", service: site.booking.services[0], zip: "" });
+  const [form, setForm] = useState<{ full_name: string; phone: string; email: string; service: string; zip: string }>({
+    full_name: "", phone: "", email: "", service: site.booking.services[0], zip: "",
+  });
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
