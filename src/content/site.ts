@@ -11,7 +11,7 @@ export const media = {
   heroVideo: { src: undefined, poster: undefined, fallback: "lightTrails" } as MediaSlot,
   revealVideo: { src: undefined, poster: undefined, fallback: "chromeReflect" } as MediaSlot,
   roadVideo: { src: undefined, poster: undefined, fallback: "roadStreaks" } as MediaSlot,
-  heroModel: { src: "/models/dk-emblem.glb" as string | undefined },
+  heroModel: { src: "/models/dk-bear.glb" as string | undefined },
   revealBefore: { src: undefined as string | undefined },
   revealAfter: { src: undefined as string | undefined },
 };
