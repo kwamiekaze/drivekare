@@ -141,6 +141,28 @@ html { scroll-behavior: auto; }
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
+/* Slogan — Amatic SC handwritten, one-line fluid */
+.slogan-amatic {
+  font-family: "Amatic SC", "Anton", system-ui, sans-serif;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.06em;
+  font-size: clamp(1.4rem, 6vw, 2.6rem);
+  line-height: 1;
+  background: linear-gradient(180deg, #F5F1EA 0%, #D8D3CB 35%, #8A857D 70%, #E3C79A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 24px rgba(240,138,29,0.08);
+}
+.slogan-amatic [data-polish] {
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: inherit;
+}
+
 /* Hide cursor on desktop when custom cursor active */
 .dk-cursor-active, .dk-cursor-active * { cursor: none !important; }
 @media (pointer: coarse) { .dk-cursor { display: none !important; } }

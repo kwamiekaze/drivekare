@@ -98,7 +98,7 @@ export function Splash() {
         }}
       />
       <div
-        className="mt-6 text-[10px] md:text-xs tracking-[0.55em] text-neutral-400"
+        className="mt-6 slogan-amatic uppercase"
         style={{ opacity: 0, transform: "translateY(8px)", animation: "dktag 0.6s ease 1.9s forwards" }}
       >
         {site.splash.tagline}

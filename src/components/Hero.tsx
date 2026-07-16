@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { site, media } from "../content/site";
-import { renderPolishTitle } from "../lib/polish-title";
 import { MediaSlot } from "./MediaSlot";
 import { HeroModel } from "./HeroModel";
 import { useOverlay } from "../lib/overlay-context";
@@ -82,10 +81,10 @@ export function Hero() {
       >
         <h1
           ref={titleRef}
-          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[13vw] md:text-[9.5vw] lg:text-[9vw] max-w-[95vw]"
+          className="slogan-amatic uppercase max-w-[95vw]"
           aria-label={site.hero.title}
         >
-          {renderPolishTitle(site.hero.title, "hero")}
+          {site.hero.title}
         </h1>
 
         <div className="mt-auto flex justify-center md:justify-end pointer-events-auto">
