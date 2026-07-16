@@ -118,23 +118,35 @@ export function Hero() {
         }}
       />
 
-      {/* Copy — headline anchored to upper third */}
-      <div className="relative z-10 min-h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28">
+      {/* 3D bear stage — between nav and headline, feet in the spotlight pool */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5]"
+        style={{
+          top: "clamp(88px, 12vh, 140px)",
+          width: "min(60vw, 520px)",
+          height: "min(52vh, 560px)",
+        }}
+      >
+        <HeroModel />
+      </div>
+
+      {/* Copy — eyebrow top-left, colossal headline anchored to bottom */}
+      <div className="relative z-10 min-h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28 pointer-events-none">
         <div className="text-[10px] md:text-xs tracking-[0.5em] uppercase text-neutral-400 mb-4">
           {site.hero.eyebrow}
         </div>
+
+        <div className="flex-1" />
+
         <h1
           ref={titleRef}
-          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[15vw] md:text-[12vw] lg:text-[11vw]"
+          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[14vw] md:text-[11vw] lg:text-[10.5vw]"
           aria-label={site.hero.title}
         >
           {renderPolishTitle(site.hero.title, "hero")}
         </h1>
 
-        {/* Spacer — bear owns this zone */}
-        <div className="flex-1" />
-
-        <div className="pb-10 md:pb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div className="mt-6 md:mt-8 pb-10 md:pb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6 pointer-events-auto">
           <p className="max-w-md text-sm md:text-base text-neutral-300 leading-relaxed">
             {site.hero.sub}
           </p>
@@ -149,18 +161,6 @@ export function Hero() {
             <span aria-hidden>→</span>
           </Link>
         </div>
-      </div>
-
-      {/* 3D bear stage — center-lower, feet anchored in the spotlight pool */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5]"
-        style={{
-          bottom: "8vh",
-          width: "min(78vw, 640px)",
-          height: "min(62vh, 640px)",
-        }}
-      >
-        <HeroModel />
       </div>
     </section>
   );
