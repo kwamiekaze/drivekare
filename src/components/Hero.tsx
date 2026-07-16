@@ -13,8 +13,6 @@ export function Hero() {
     if (typeof window === "undefined") return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) return;
-    let cleanup: (() => void) | undefined;
-
     (async () => {
       const { default: gsap } = await import("gsap");
       const img = wordmarkRef.current;
@@ -26,7 +24,6 @@ export function Hero() {
         );
       }
     })();
-    return () => cleanup?.();
   }, []);
 
   const scrollNext = () => {
@@ -39,101 +36,94 @@ export function Hero() {
       className="relative w-full overflow-hidden carbon"
       style={{ height: "100dvh", background: "#0A0A0B" }}
     >
-      {/* Video background - full brightness, no filter */}
-      <div className="absolute inset-0">
+      {/* Video background */}
+      <div className="absolute inset-0 z-0">
         <MediaSlot slot={media.heroVideo} className="w-full h-full" objectPosition="center 68%" eager />
       </div>
+
       {/* Spotlight warm glow near bear */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none z-[1]"
         style={{
           background:
-            "radial-gradient(30% 20% at 50% 78%, rgba(255,214,150,0.28) 0%, rgba(240,138,29,0.10) 45%, rgba(0,0,0,0) 72%)",
+            "radial-gradient(30% 20% at 50% 72%, rgba(255,214,150,0.28) 0%, rgba(240,138,29,0.10) 45%, rgba(0,0,0,0) 72%)",
         }}
       />
-      {/* Edge vignette only - does NOT darken wordmark area */}
+      {/* Edge vignette */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none z-[1]"
         style={{
           background:
             "radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 55%, rgba(10,10,11,0.75) 100%)",
         }}
       />
 
-      {/* SEO h1 — visual title is the wordmark image */}
+      {/* SEO h1 */}
       <h1 className="sr-only">{site.meta.title}</h1>
 
-      {/* Vertical flex layout: wordmark → bear → cta → scroll */}
+      {/* Wordmark — absolutely positioned near top, plain img, zero processing */}
       <div
-        className="relative z-10 h-full flex flex-col items-center px-5 md:px-10"
-        style={{
-          paddingTop: "calc(env(safe-area-inset-top) + 80px)",
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
-        }}
+        className="absolute left-0 right-0 z-20 flex justify-center pointer-events-none px-5"
+        style={{ top: "calc(env(safe-area-inset-top) + 84px)" }}
       >
-        {/* Wordmark - top, unfiltered, exact pixels */}
-        <picture className="block w-full flex justify-center">
-          <source srcSet={`${wordmark.src2x} 1x`} type="image/webp" />
-          <img
-            ref={wordmarkRef}
-            src={wordmark.src2x}
-            alt={wordmark.alt}
-            fetchPriority="high"
-            decoding="async"
-            className="block h-auto select-none wordmark-hero"
-            style={{
-              width: "min(88vw, 720px)",
-              maxWidth: "min(88vw, 900px)",
-              filter: "drop-shadow(0 6px 20px rgba(0,0,0,0.55))",
-              opacity: 1,
-              mixBlendMode: "normal",
-            }}
-            draggable={false}
-          />
-        </picture>
+        <img
+          ref={wordmarkRef}
+          src={wordmark.src}
+          alt={wordmark.alt}
+          fetchPriority="high"
+          decoding="async"
+          draggable={false}
+          className="block h-auto select-none wordmark-hero"
+          style={{
+            width: "min(88vw, 720px)",
+            filter: "none",
+            opacity: 1,
+            mixBlendMode: "normal",
+            WebkitFilter: "none",
+          }}
+        />
         <style>{`
           @media (min-width: 768px) {
             .wordmark-hero { width: min(60vw, 900px) !important; }
           }
         `}</style>
+      </div>
 
-        {/* Bear stage - flex grow, contains bear */}
-        <div
-          className="relative w-full flex-1 flex items-end justify-center pointer-events-none"
-          style={{
-            minHeight: 0,
-            marginTop: "clamp(12px, 3vh, 32px)",
-          }}
+      {/* Bear — center-stage in the spotlight pool (morning composition) */}
+      <div
+        className="absolute left-1/2 z-10 pointer-events-none"
+        style={{
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "min(92vw, 620px)",
+          height: "min(78vh, 720px)",
+        }}
+      >
+        <div className="w-full h-full pointer-events-auto">
+          <HeroModel />
+        </div>
+      </div>
+
+      {/* Bottom stack: CTA + Scroll, both below the bear */}
+      <div
+        className="absolute left-0 right-0 z-20 flex flex-col items-center gap-3"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 20px)" }}
+      >
+        <button
+          ref={ctaRef}
+          onClick={() => open("book")}
+          data-interactive
+          className="dk-cta group inline-flex items-center gap-3 px-8 py-4 text-[11px] tracking-[0.32em] uppercase font-semibold text-black rounded-full"
         >
-          <div
-            className="relative pointer-events-auto w-[86vw] max-w-[460px] md:w-[42vw] md:max-w-[480px]"
-            style={{
-              height: "clamp(260px, 42vh, 500px)",
-            }}
-          >
-            <HeroModel />
-          </div>
-        </div>
+          <span className="dk-cta__label">{site.hero.cta}</span>
+          <span aria-hidden className="dk-cta__arrow">→</span>
+        </button>
 
-        {/* CTA - below bear */}
-        <div className="w-full flex justify-center mt-4 md:mt-6">
-          <button
-            ref={ctaRef}
-            onClick={() => open("book")}
-            data-interactive
-            className="dk-cta group inline-flex items-center gap-3 px-8 py-4 text-[11px] tracking-[0.32em] uppercase font-semibold text-black rounded-full"
-          >
-            <span className="dk-cta__label">{site.hero.cta}</span>
-            <span aria-hidden className="dk-cta__arrow">→</span>
-          </button>
-        </div>
-
-        {/* Scroll control */}
         <button
           type="button"
           onClick={scrollNext}
           aria-label="Scroll to next section"
-          className="mt-3 flex flex-col items-center gap-1.5 group focus:outline-none"
+          className="flex flex-col items-center gap-1.5 group focus:outline-none"
           data-interactive
         >
           <span className="block w-px h-7 bg-white/25 relative overflow-hidden">
