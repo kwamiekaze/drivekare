@@ -29,13 +29,23 @@ export function Nav() {
           data-interactive
           aria-label={site.brand}
         >
-          <img
-            src="/brand/dk-badge-192.webp"
-            alt=""
-            width={44}
-            height={44}
-            className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-[0_0_18px_rgba(240,138,29,0.35)]"
-          />
+          <span
+            className="relative w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden inline-block shadow-[0_0_18px_rgba(240,138,29,0.35)]"
+            style={{
+              border: "1px solid rgba(232,232,236,0.35)",
+              background: "#0A0A0B",
+            }}
+          >
+            <img
+              src="/brand/dk-badge-192.webp"
+              alt=""
+              width={44}
+              height={44}
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ transform: "scale(1.4)", transformOrigin: "center center" }}
+            />
+          </span>
+
           <span className="hidden md:inline font-display uppercase tracking-[0.2em] text-sm steel">
             {site.brand}
           </span>
