@@ -14,11 +14,8 @@ function installUnlock() {
       v.muted = true;
       v.play().catch(() => {});
     });
-    document.removeEventListener("touchstart", retry, true);
-    document.removeEventListener("pointerdown", retry, true);
-    document.removeEventListener("click", retry, true);
   };
-  document.addEventListener("touchstart", retry, { capture: true, once: false, passive: true });
+  document.addEventListener("touchstart", retry, { capture: true, passive: true });
   document.addEventListener("pointerdown", retry, { capture: true });
   document.addEventListener("click", retry, { capture: true });
 }
@@ -28,23 +25,24 @@ export function MediaSlot({
   className = "",
   objectPosition = "center",
   eager = false,
+  dim = false,
 }: {
   slot: MediaSlotT;
   className?: string;
   objectPosition?: string;
   eager?: boolean;
+  dim?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasPlayedRef = useRef(false);
   const [errored, setErrored] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
 
-  // Imperatively set muted/playsinline attributes BEFORE React tries to. iOS
-  // Safari refuses to autoplay a video whose `muted` attribute is missing from
-  // the DOM at load — and React does not render the `muted` prop as an attr.
   const videoCbRef = useCallback((el: HTMLVideoElement | null) => {
     videoRef.current = el;
     if (!el) return;
+    // Set attrs imperatively BEFORE play(): required by iOS.
     el.muted = true;
     el.defaultMuted = true;
     el.setAttribute("muted", "");
@@ -52,82 +50,65 @@ export function MediaSlot({
     el.setAttribute("webkit-playsinline", "");
     el.setAttribute("autoplay", "");
     el.setAttribute("loop", "");
+    el.setAttribute("preload", "auto");
+
     const tryPlay = () => {
       el.muted = true;
       const p = el.play();
       if (p && typeof p.then === "function") {
-        p.then(() => {
-          hasPlayedRef.current = true;
-          pausedVideos.delete(el);
-        }).catch(() => {
-          pausedVideos.add(el);
-        });
+        p.then(() => pausedVideos.delete(el)).catch(() => pausedVideos.add(el));
       }
     };
     tryPlay();
     el.addEventListener("loadedmetadata", tryPlay);
     el.addEventListener("canplay", tryPlay);
-  }, [eager]);
+    el.addEventListener("canplaythrough", tryPlay);
+  }, []);
 
   useEffect(() => {
     installUnlock();
-    if (!ref.current) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        const v = videoRef.current;
-        if (!v) return;
-        if (e.isIntersecting) {
-          v.muted = true;
-          v.play()
-            .then(() => {
-              hasPlayedRef.current = true;
-              pausedVideos.delete(v);
-            })
-            .catch(() => {
-              pausedVideos.add(v);
-            });
-        } else if (hasPlayedRef.current && !eager) {
-          // Only pause after we successfully started playing at least once —
-          // avoids racing the initial play attempt on iOS. Never pause the
-          // hero (eager) video: layout thrash from pinning / splash unmount
-          // can briefly report the container as out of view.
-          v.pause();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(ref.current);
-    return () => {
-      io.disconnect();
-      const v = videoRef.current;
-      if (v) pausedVideos.delete(v);
-    };
-  }, [eager]);
+    if (!slot.src) return;
+    // Fallback appears ONLY if the video hasn't reached "playing" within ~4s.
+    const t = window.setTimeout(() => {
+      if (!isPlaying && !errored) setShowFallback(true);
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [slot.src, isPlaying, errored]);
 
   const showVideo = !!slot.src && !errored;
+  // Hide procedural fallback the moment real frames render.
+  const renderFallback = !showVideo || (showFallback && !isPlaying);
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
+      {renderFallback ? (
+        <div className="absolute inset-0">
+          <ProceduralCanvas mode={slot.fallback} />
+        </div>
+      ) : null}
       {showVideo ? (
         <video
           ref={videoCbRef}
-          className="w-full h-full object-cover"
-          style={{ objectPosition }}
+          className="relative w-full h-full object-cover"
+          style={{ objectPosition, opacity: dim ? 0.45 : 1 }}
           poster={slot.poster}
           muted
           playsInline
           loop
           autoPlay
-          preload={eager ? "auto" : "metadata"}
+          preload="auto"
           aria-hidden
+          onPlaying={() => {
+            setIsPlaying(true);
+            setShowFallback(false);
+          }}
+          onPause={() => setIsPlaying(false)}
           onError={() => setErrored(true)}
         >
           {slot.webm ? <source src={slot.webm} type="video/webm" /> : null}
           <source src={slot.src} type="video/mp4" />
         </video>
-      ) : (
-        <ProceduralCanvas mode={slot.fallback} />
-      )}
+      ) : null}
     </div>
   );
 }

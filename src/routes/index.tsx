@@ -5,6 +5,7 @@ import { Nav } from "../components/Nav";
 import { Hero } from "../components/Hero";
 import { CustomCursor } from "../components/CustomCursor";
 import { Overlays } from "../components/Overlays";
+import { BottomBand } from "../components/BottomBand";
 import { OverlayProvider } from "../lib/overlay-context";
 import { AuthProvider } from "../lib/auth-context";
 import { site } from "../content/site";
@@ -31,11 +32,12 @@ function Home() {
   return (
     <AuthProvider>
       <OverlayProvider>
-        <div className="relative bg-[#0A0A0B] text-neutral-100 overflow-hidden" style={{ height: "100dvh" }}>
+        <div className="relative bg-[#0A0A0B] text-neutral-100" style={{ overflowX: "clip" }}>
           <Splash />
           <CustomCursor />
           <Nav />
           <Hero />
+          <BottomBand />
           <Overlays />
         </div>
       </OverlayProvider>
