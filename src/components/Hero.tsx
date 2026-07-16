@@ -1,152 +1,115 @@
 import { useEffect, useRef } from "react";
-import { site, media, wordmark } from "../content/site";
+import { site, media } from "../content/site";
+import { renderPolishTitle } from "../lib/polish-title";
 import { MediaSlot } from "./MediaSlot";
 import { HeroModel } from "./HeroModel";
 import { useOverlay } from "../lib/overlay-context";
 
 export function Hero() {
-  const wordmarkRef = useRef<HTMLImageElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
   const { open } = useOverlay();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
+    let cleanup: (() => void) | undefined;
+
     (async () => {
       const { default: gsap } = await import("gsap");
-      const img = wordmarkRef.current;
-      if (img) {
+      const title = titleRef.current;
+      const cta = ctaRef.current;
+      if (!title) return;
+      const letters = title.querySelectorAll<HTMLSpanElement>("[data-polish]");
+
+      letters.forEach((l) => {
+        l.classList.remove("dull");
+        l.classList.add("steel-hot");
+      });
+
+      if (!reduced) {
         gsap.fromTo(
-          img,
-          { y: 24, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1.0, ease: "power3.out", delay: 0.1 },
+          letters,
+          { y: 40, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", stagger: 0.025 }
         );
+
+        const onMove = (e: MouseEvent) => {
+          if (!cta) return;
+          const r = cta.getBoundingClientRect();
+          const dx = e.clientX - (r.left + r.width / 2);
+          const dy = e.clientY - (r.top + r.height / 2);
+          const dist = Math.hypot(dx, dy);
+          if (dist < 180) gsap.to(cta, { x: dx * 0.2, y: dy * 0.2, duration: 0.4, ease: "power3.out" });
+          else gsap.to(cta, { x: 0, y: 0, duration: 0.6, ease: "power3.out" });
+        };
+        window.addEventListener("mousemove", onMove);
+        cleanup = () => window.removeEventListener("mousemove", onMove);
       }
     })();
+    return () => cleanup?.();
   }, []);
-
-  const scrollNext = () => {
-    const el = document.getElementById("next");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   return (
     <section
       className="relative w-full overflow-hidden carbon"
       style={{ height: "100dvh", background: "#0A0A0B" }}
     >
-      {/* Video background */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0" style={{ filter: "brightness(0.62)" }}>
         <MediaSlot slot={media.heroVideo} className="w-full h-full" objectPosition="center 68%" eager />
       </div>
-
-      {/* Spotlight warm glow near bear */}
       <div
-        className="absolute inset-0 pointer-events-none z-[1]"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(30% 20% at 50% 72%, rgba(255,214,150,0.28) 0%, rgba(240,138,29,0.10) 45%, rgba(0,0,0,0) 72%)",
+            "radial-gradient(34% 22% at 50% 82%, rgba(255,214,150,0.22) 0%, rgba(240,138,29,0.08) 45%, rgba(0,0,0,0) 72%)",
         }}
       />
-      {/* Edge vignette */}
       <div
-        className="absolute inset-0 pointer-events-none z-[1]"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 55%, rgba(10,10,11,0.75) 100%)",
+            "radial-gradient(85% 85% at 50% 55%, rgba(0,0,0,0) 0%, rgba(10,10,11,0.78) 88%)",
         }}
       />
 
-      {/* SEO h1 */}
-      <h1 className="sr-only">{site.meta.title}</h1>
-
-      {/* Wordmark — absolutely positioned near top, plain img, zero processing */}
       <div
-        className="absolute left-0 right-0 z-20 flex justify-center pointer-events-none px-5"
-        style={{ top: "calc(env(safe-area-inset-top) + 84px)" }}
-      >
-        <img
-          ref={wordmarkRef}
-          src={wordmark.src}
-          alt={wordmark.alt}
-          fetchPriority="high"
-          decoding="async"
-          draggable={false}
-          className="block h-auto select-none wordmark-hero"
-          style={{
-            width: "min(88vw, 720px)",
-            filter: "none",
-            opacity: 1,
-            mixBlendMode: "normal",
-            WebkitFilter: "none",
-          }}
-        />
-        <style>{`
-          @media (min-width: 768px) {
-            .wordmark-hero { width: min(60vw, 900px) !important; }
-          }
-        `}</style>
-      </div>
-
-      {/* Bear — center-stage in the spotlight pool (morning composition) */}
-      <div
-        className="absolute left-1/2 z-10 pointer-events-none"
+        className="relative z-10 h-full flex flex-col px-5 md:px-10 pointer-events-none"
         style={{
-          top: "48%",
-          transform: "translate(-50%, -50%)",
-          width: "min(92vw, 560px)",
-          height: "min(62vh, 560px)",
+          paddingTop: "calc(env(safe-area-inset-top) + 96px)",
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 32px)",
         }}
       >
-        <div className="w-full h-full pointer-events-auto">
-          <HeroModel />
+        <h1
+          ref={titleRef}
+          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[13vw] md:text-[9.5vw] lg:text-[9vw] max-w-[95vw]"
+          aria-label={site.hero.title}
+        >
+          {renderPolishTitle(site.hero.title, "hero")}
+        </h1>
+
+        <div className="mt-auto flex justify-center md:justify-end pointer-events-auto">
+          <button
+            ref={ctaRef}
+            onClick={() => open("book")}
+            data-interactive
+            className="inline-flex items-center gap-3 px-7 py-4 text-[11px] tracking-[0.32em] uppercase font-semibold text-black rounded-full ignition-glow"
+            style={{ background: "linear-gradient(180deg,#FFA940,#F08A1D)" }}
+          >
+            {site.hero.cta}
+            <span aria-hidden>→</span>
+          </button>
         </div>
       </div>
 
-      {/* Bottom stack: CTA + Scroll, both below the bear */}
       <div
-        className="absolute left-0 right-0 z-20 flex flex-col items-center gap-3"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 20px)" }}
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5] w-[88vw] max-w-[480px] md:w-[42vw] md:max-w-[480px]"
+        style={{
+          bottom: "clamp(110px, 15vh, 200px)",
+          height: "clamp(300px, 44vh, 520px)",
+        }}
       >
-        <button
-          ref={ctaRef}
-          onClick={() => open("book")}
-          data-interactive
-          className="dk-cta group inline-flex items-center gap-3 px-8 py-4 text-[11px] tracking-[0.32em] uppercase font-semibold text-black rounded-full"
-        >
-          <span className="dk-cta__label">{site.hero.cta}</span>
-          <span aria-hidden className="dk-cta__arrow">→</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={scrollNext}
-          aria-label="Scroll to next section"
-          className="flex flex-col items-center gap-1.5 group focus:outline-none"
-          data-interactive
-        >
-          <span className="block w-px h-7 bg-white/25 relative overflow-hidden">
-            <span
-              className="absolute left-1/2 -translate-x-1/2 top-0 w-[6px] h-[6px] rounded-full"
-              style={{
-                background: "#F08A1D",
-                boxShadow: "0 0 12px rgba(240,138,29,0.9), 0 0 24px rgba(240,138,29,0.5)",
-                animation: "scroll-dot 2.2s ease-in-out infinite",
-              }}
-            />
-          </span>
-          <span className="text-[9px] tracking-[0.42em] uppercase text-neutral-500 group-hover:text-[#F08A1D] transition-colors">
-            Scroll
-          </span>
-          <style>{`
-            @keyframes scroll-dot {
-              0%   { transform: translate(-50%, 0); opacity: 0.9; }
-              50%  { transform: translate(-50%, 22px); opacity: 1; }
-              100% { transform: translate(-50%, 0); opacity: 0.9; }
-            }
-          `}</style>
-        </button>
+        <HeroModel />
       </div>
     </section>
   );

@@ -26,18 +26,8 @@ export function Splash() {
     if (leaving) return;
     setLeaving(true);
     sessionStorage.setItem(KEY, "1");
-    // Explicit user gesture: kick hero videos into playback immediately.
-    try {
-      document
-        .querySelectorAll<HTMLVideoElement>("video")
-        .forEach((v) => {
-          v.muted = true;
-          v.play().catch(() => {});
-        });
-    } catch {}
     setTimeout(() => setGone(true), 900);
   };
-
 
   if (gone) return null;
 
