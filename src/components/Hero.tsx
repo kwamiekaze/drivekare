@@ -21,7 +21,7 @@ function installHeroUnlock() {
 }
 
 export function Hero() {
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { open } = useOverlay();
