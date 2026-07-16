@@ -165,6 +165,3 @@ export function Hero() {
     </section>
   );
 }
-    </section>
-  );
-}
