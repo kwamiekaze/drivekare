@@ -1,13 +1,65 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { site, media } from "../content/site";
-import { MediaSlot } from "./MediaSlot";
 import { HeroModel } from "./HeroModel";
 import { useOverlay } from "../lib/overlay-context";
+
+// One-time document-level unlock (last-resort for iOS Low Power Mode etc.)
+let unlockInstalled = false;
+const pausedHeroVideos = new Set<HTMLVideoElement>();
+function installHeroUnlock() {
+  if (unlockInstalled || typeof document === "undefined") return;
+  unlockInstalled = true;
+  const retry = () => {
+    pausedHeroVideos.forEach((v) => {
+      v.muted = true;
+      v.play().catch(() => {});
+    });
+  };
+  document.addEventListener("touchstart", retry, { capture: true, passive: true });
+  document.addEventListener("pointerdown", retry, { capture: true });
+  document.addEventListener("click", retry, { capture: true });
+}
 
 export function Hero() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const { open } = useOverlay();
+
+  const videoCbRef = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    el.setAttribute("muted", "");
+    el.setAttribute("playsinline", "");
+    el.setAttribute("webkit-playsinline", "");
+    el.setAttribute("autoplay", "");
+    el.setAttribute("loop", "");
+    const tryPlay = () => {
+      el.muted = true;
+      const p = el.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => pausedHeroVideos.delete(el)).catch(() => pausedHeroVideos.add(el));
+      }
+    };
+    tryPlay();
+    el.addEventListener("loadedmetadata", tryPlay);
+    el.addEventListener("canplay", tryPlay);
+    installHeroUnlock();
+  }, []);
+
+  useEffect(() => {
+    const onSplashDismiss = () => {
+      const v = videoRef.current;
+      if (!v) return;
+      v.muted = true;
+      v.play().catch(() => pausedHeroVideos.add(v));
+    };
+    window.addEventListener("dk-splash-dismissed", onSplashDismiss);
+    return () => window.removeEventListener("dk-splash-dismissed", onSplashDismiss);
+  }, []);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -54,8 +106,22 @@ export function Hero() {
       className="relative w-full overflow-hidden carbon"
       style={{ height: "100dvh", background: "#0A0A0B" }}
     >
-      <div className="absolute inset-0" style={{ filter: "brightness(0.62)" }}>
-        <MediaSlot slot={media.heroVideo} className="w-full h-full" objectPosition="center 68%" eager />
+      <div className="absolute inset-0 overflow-hidden" style={{ filter: "brightness(0.62)" }}>
+        <video
+          ref={videoCbRef}
+          className="w-full h-full object-cover"
+          style={{ objectPosition: "center 68%" }}
+          poster={media.heroVideo.poster}
+          muted
+          playsInline
+          loop
+          autoPlay
+          preload="auto"
+          aria-hidden
+        >
+          {media.heroVideo.webm ? <source src={media.heroVideo.webm} type="video/webm" /> : null}
+          <source src={media.heroVideo.src} type="video/mp4" />
+        </video>
       </div>
       <div
         className="absolute inset-0 pointer-events-none"

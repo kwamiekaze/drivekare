@@ -22,24 +22,13 @@ export function Nav() {
       className={`fixed top-0 inset-x-0 z-[110] transition-all duration-300 ${scrolled ? "frost py-3" : "py-5"}`}
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
     >
-      <div className="mx-auto max-w-[1400px] px-5 md:px-8 flex items-center justify-between">
-        <button
-          onClick={() => (menuOpen ? close() : open("menu"))}
-          className="flex items-center gap-2 group"
-          data-interactive
-          aria-label={site.brand}
+      <div className="mx-auto max-w-[1400px] px-5 md:px-8 flex items-center justify-between gap-4">
+        <span
+          className="slogan-amatic whitespace-nowrap leading-none"
+          style={{ fontSize: "clamp(1.1rem, 4.5vw, 1.6rem)" }}
         >
-          <img
-            src="/brand/dk-badge-192.webp"
-            alt=""
-            width={44}
-            height={44}
-            className="w-10 h-10 md:w-11 md:h-11 rounded-full object-cover shadow-[0_0_18px_rgba(240,138,29,0.35)]"
-          />
-          <span className="hidden md:inline font-display uppercase tracking-[0.2em] text-sm steel">
-            {site.brand}
-          </span>
-        </button>
+          {site.slogan}
+        </span>
 
         <div className="flex items-center gap-3">
           {user && (
