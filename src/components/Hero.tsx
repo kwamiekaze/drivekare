@@ -84,7 +84,7 @@ export function Hero() {
           className="slogan-amatic uppercase max-w-[95vw]"
           aria-label={site.hero.title}
         >
-          {renderPolishTitle(site.hero.title, "hero")}
+          {site.hero.title}
         </h1>
 
         <div className="mt-auto flex justify-center md:justify-end pointer-events-auto">
