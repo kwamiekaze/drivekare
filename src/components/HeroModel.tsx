@@ -1,49 +1,35 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Environment, ContactShadows } from "@react-three/drei";
+import { OrbitControls, useGLTF, Environment, ContactShadows, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { media } from "../content/site";
 
 const MODEL_URL = media.heroModel.src;
 
-/**
- * Grounded turntable: bear stands planted at y=0, spins slowly, subtle breathing.
- * Auto-rotation pauses on pointer down, resumes ~2s after release.
- */
+/** Outer group: slow turntable, pausable during drag. */
 function Turntable({
   children,
-  offset,
-  scale,
   spinningRef,
 }: {
   children: React.ReactNode;
-  offset: THREE.Vector3;
-  scale: number;
   spinningRef: React.MutableRefObject<boolean>;
 }) {
   const outer = useRef<THREE.Group>(null!);
-  const inner = useRef<THREE.Group>(null!);
 
-  useFrame((state, delta) => {
-    if (!outer.current || !inner.current) return;
+  useFrame((_state, delta) => {
+    if (!outer.current) return;
     const reduced =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!reduced && spinningRef.current) {
       outer.current.rotation.y += 0.12 * delta;
     }
-    if (!reduced) {
-      const t = state.clock.getElapsedTime();
-      // breathing: ±0.5% on Y only
-      inner.current.scale.y = scale * (1 + Math.sin(t * 1.1) * 0.005);
-    }
   });
 
+  // three-quarter hero angle
   return (
-    <group ref={outer}>
-      <group ref={inner} position={offset} scale={scale}>
-        {children}
-      </group>
+    <group ref={outer} rotation={[0, -0.35, 0]}>
+      {children}
     </group>
   );
 }
@@ -52,17 +38,17 @@ function BearMaterialPass({ scene }: { scene: THREE.Object3D }) {
   useEffect(() => {
     scene.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
-      if ((mesh as any).isMesh && mesh.material) {
+      if ((mesh as any).isMesh) {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         for (const m of mats) {
           const mat = m as THREE.MeshStandardMaterial;
-          if ((mat as any).isMeshStandardMaterial) {
+          if (mat && (mat as any).isMeshStandardMaterial) {
             mat.envMapIntensity = 1.0;
             mat.needsUpdate = true;
           }
         }
         mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        mesh.receiveShadow = false;
       }
     });
   }, [scene]);
@@ -79,7 +65,6 @@ function GroundedBear({
   const { scene } = useGLTF(url, true);
 
   const { offset, scale } = useMemo(() => {
-    // Clone to avoid mutating cached scene across HMR
     const box = new THREE.Box3().setFromObject(scene);
     const size = new THREE.Vector3();
     const center = new THREE.Vector3();
@@ -87,46 +72,53 @@ function GroundedBear({
     box.getCenter(center);
     const maxDim = Math.max(size.x, size.y, size.z) || 1;
     const s = 2.4 / maxDim;
-    // Recenter X/Z, then push up so feet (minY) land on y=0 after scaling.
+    // recenter X/Z; Y offset so scaled minY lands at 0 (feet on the ground)
     const off = new THREE.Vector3(-center.x, -box.min.y, -center.z);
     return { offset: off, scale: s };
   }, [scene]);
 
   return (
-    <Turntable offset={offset} scale={scale} spinningRef={spinningRef}>
-      <BearMaterialPass scene={scene} />
-      <primitive object={scene} />
+    <Turntable spinningRef={spinningRef}>
+      <group position={offset} scale={scale}>
+        <BearMaterialPass scene={scene} />
+        <primitive object={scene} />
+      </group>
     </Turntable>
   );
 }
 
-function PlaceholderBear({ spinningRef }: { spinningRef: React.MutableRefObject<boolean> }) {
+/** Minimal orange ring loader shown while the GLB streams in. */
+function RingLoader() {
   return (
-    <Turntable offset={new THREE.Vector3(0, 0, 0)} scale={1} spinningRef={spinningRef}>
-      <mesh position={[0, 0.6, 0]} castShadow>
-        <sphereGeometry args={[0.55, 32, 32]} />
-        <meshStandardMaterial color="#8a6b4a" roughness={0.75} metalness={0.05} />
-      </mesh>
-      <mesh position={[0, 1.35, 0]} castShadow>
-        <sphereGeometry args={[0.42, 32, 32]} />
-        <meshStandardMaterial color="#8a6b4a" roughness={0.75} metalness={0.05} />
-      </mesh>
-    </Turntable>
+    <Html center>
+      <div
+        aria-label="Loading"
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: "50%",
+          border: "2px solid rgba(240,138,29,0.25)",
+          borderTopColor: "#FFA940",
+          animation: "dk-spin 0.9s linear infinite",
+        }}
+      />
+      <style>{`@keyframes dk-spin{to{transform:rotate(360deg)}}`}</style>
+    </Html>
   );
 }
 
 function ModelContent({ spinningRef }: { spinningRef: React.MutableRefObject<boolean> }) {
   const url = MODEL_URL;
-  if (!url) return <PlaceholderBear spinningRef={spinningRef} />;
+  if (!url) return null;
   return <GroundedBear url={url} spinningRef={spinningRef} />;
 }
 
-export function HeroModel() {
+function HeroCanvas() {
   const spinningRef = useRef(true);
   const resumeTimer = useRef<number | null>(null);
   const [cursor, setCursor] = useState<"grab" | "grabbing">("grab");
 
-  const onPointerDown = () => {
+  const pauseSpin = () => {
     spinningRef.current = false;
     setCursor("grabbing");
     if (resumeTimer.current) {
@@ -134,12 +126,12 @@ export function HeroModel() {
       resumeTimer.current = null;
     }
   };
-  const onPointerUp = () => {
+  const scheduleResume = () => {
     setCursor("grab");
     if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
     resumeTimer.current = window.setTimeout(() => {
       spinningRef.current = true;
-    }, 2000);
+    }, 1500);
   };
 
   useEffect(() => {
@@ -152,45 +144,53 @@ export function HeroModel() {
     <Canvas
       dpr={[1, 2]}
       shadows
-      camera={{ position: [0, 1.35, 3.6], fov: 34 }}
-      gl={{ antialias: true, alpha: true }}
-      style={{ background: "transparent", cursor }}
-      onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
+      camera={{ position: [0, 1.5, 3.8], fov: 32 }}
+      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      style={{ background: "transparent", cursor, touchAction: "pan-y" }}
+      onCreated={({ gl }) => {
+        // Allow vertical page scroll to pass through canvas on touch devices.
+        gl.domElement.style.touchAction = "pan-y";
+        setTimeout(() => {
+          gl.domElement.style.touchAction = "pan-y";
+        }, 0);
+      }}
+      onPointerDown={pauseSpin}
+      onPointerUp={scheduleResume}
+      onPointerLeave={scheduleResume}
     >
-      {/* Camera looks gently down at the standing figure */}
-      <CameraAim target={[0, 0.9, 0]} />
+      <CameraAim target={[0, 0.85, 0]} />
 
-      {/* Low ambient so the spotlight reads */}
+      {/* Very low ambient — spotlight must dominate */}
       <ambientLight intensity={0.22} />
 
-      {/* Overhead warm-white key spotlight — mirrors the video's ground pool */}
+      {/* Warm-tinted key spotlight from above-front, matches the video's ground pool */}
       <spotLight
-        position={[0, 5.5, 1.2]}
+        position={[0, 5.5, 2.2]}
+        target-position={[0, 0.8, 0]}
         angle={0.5}
         penumbra={0.9}
-        intensity={22}
-        distance={12}
-        color="#fff2df"
+        decay={2}
+        intensity={65}
+        distance={14}
+        color="#FFB566"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
 
-      {/* Ignition-orange rim from behind */}
-      <directionalLight position={[-2, 2.2, -3]} intensity={0.9} color="#FFA940" />
+      {/* Faint ignition-orange rim from behind */}
+      <directionalLight position={[-2, 2.4, -3]} intensity={0.75} color="#FFA940" />
+      <directionalLight position={[2.5, 2, -2.5]} intensity={0.35} color="#FFC98A" />
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<RingLoader />}>
         <ModelContent spinningRef={spinningRef} />
-        <Environment preset="city" environmentIntensity={0.35} />
-        {/* Grounding shadow — sells the composite against the video spotlight */}
+        <Environment preset="city" environmentIntensity={0.4} />
         <ContactShadows
           position={[0, 0.001, 0]}
           opacity={0.55}
-          scale={6}
-          blur={2.4}
-          far={3}
+          scale={10}
+          blur={2.6}
+          far={3.5}
           color="#000000"
         />
       </Suspense>
@@ -202,9 +202,9 @@ export function HeroModel() {
         enableDamping
         dampingFactor={0.08}
         rotateSpeed={0.6}
-        minPolarAngle={(72 * Math.PI) / 180}
-        maxPolarAngle={(90 * Math.PI) / 180}
-        target={[0, 0.9, 0]}
+        minPolarAngle={1.2}
+        maxPolarAngle={1.65}
+        target={[0, 0.85, 0]}
       />
     </Canvas>
   );
@@ -215,6 +215,49 @@ function CameraAim({ target }: { target: [number, number, number] }) {
     camera.lookAt(target[0], target[1], target[2]);
   });
   return null;
+}
+
+/**
+ * HeroModel: defers Canvas mount via IntersectionObserver so first paint isn't
+ * blocked by the R3F bundle + GLB decode.
+ */
+export function HeroModel() {
+  const holderRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Mount right after hydration; IO ensures we don't mount if the hero
+    // is somehow out of view on load.
+    const el = holderRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setVisible(true);
+            io.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    io.observe(el);
+    // Kick immediately if already in viewport
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setVisible(true);
+      io.disconnect();
+    }
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <div ref={holderRef} style={{ width: "100%", height: "100%" }}>
+      {visible ? <HeroCanvas /> : null}
+    </div>
+  );
 }
 
 if (MODEL_URL) {
