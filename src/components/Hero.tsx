@@ -78,7 +78,7 @@ export function Hero() {
         className="relative z-10 h-full flex flex-col items-center px-5 md:px-10 pointer-events-none"
         style={{
           paddingTop: "calc(env(safe-area-inset-top) + 96px)",
-          paddingBottom: "calc(env(safe-area-inset-bottom) + 32px)",
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 96px)",
         }}
       >
         <picture className="block w-full flex justify-center wordmark-glint">
