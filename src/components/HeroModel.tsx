@@ -82,15 +82,17 @@ function GroundedBear({
 
     // Frustum-fit: ensure the (scaled) model fits vertically AND horizontally
     // with ~10% padding inside the camera's view at the model's Z (~0).
-    const aim = new THREE.Vector3(0, 0.85, 0);
+    const aimY = 0.85;
+    const aim = new THREE.Vector3(0, aimY, 0);
     const camDist = camera.position.distanceTo(aim) || 3.8;
     const fovRad = (camera.fov * Math.PI) / 180;
     const aspect = size.width && size.height ? size.width / size.height : 1;
     const viewH = 2 * Math.tan(fovRad / 2) * camDist;
     const viewW = viewH * aspect;
-    const padding = 0.86; // ~7% margin top/bottom
-
-    const fitByH = (viewH * padding) / sz.y;
+    const padding = 0.88;
+    // Model spans y∈[0, sz.y*s]; aim is at aimY. Top must not exceed
+    // aimY + viewH*padding/2, bottom must not fall below aimY - viewH*padding/2.
+    const fitByH = ((viewH * padding) / 2 + aimY) / sz.y;
     const fitByW = (viewW * padding) / sz.x;
     const s = Math.min(baseScale, fitByH, fitByW);
 
