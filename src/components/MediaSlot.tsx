@@ -36,7 +36,7 @@ export function MediaSlot({
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [errored, setErrored] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasFrame, setHasFrame] = useState(false);
   const [showFallback, setShowFallback] = useState(false);
 
   const videoCbRef = useCallback((el: HTMLVideoElement | null) => {
@@ -52,44 +52,50 @@ export function MediaSlot({
     el.setAttribute("loop", "");
     el.setAttribute("preload", "auto");
 
+    const markFrame = () => setHasFrame(true);
     const tryPlay = () => {
       el.muted = true;
       const p = el.play();
       if (p && typeof p.then === "function") {
-        p.then(() => pausedVideos.delete(el)).catch(() => pausedVideos.add(el));
+        p.then(() => {
+          pausedVideos.delete(el);
+          setHasFrame(true);
+        }).catch(() => pausedVideos.add(el));
       }
     };
     tryPlay();
     el.addEventListener("loadedmetadata", tryPlay);
+    el.addEventListener("loadeddata", markFrame);
     el.addEventListener("canplay", tryPlay);
     el.addEventListener("canplaythrough", tryPlay);
+    el.addEventListener("playing", markFrame);
   }, []);
 
   useEffect(() => {
     installUnlock();
     if (!slot.src) return;
-    // Fallback appears ONLY if the video hasn't reached "playing" within ~4s.
+    // Fallback appears ONLY if the video has neither loaded a frame nor errored within ~4s.
     const t = window.setTimeout(() => {
-      if (!isPlaying && !errored) setShowFallback(true);
+      if (!hasFrame && !errored) setShowFallback(true);
     }, 4000);
     return () => window.clearTimeout(t);
-  }, [slot.src, isPlaying, errored]);
+  }, [slot.src, hasFrame, errored]);
 
   const showVideo = !!slot.src && !errored;
-  // Hide procedural fallback the moment real frames render.
-  const renderFallback = !showVideo || (showFallback && !isPlaying);
+  // Hide procedural fallback the moment real frames are ready.
+  const renderFallback = !showVideo || (showFallback && !hasFrame);
 
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
       {renderFallback ? (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 z-0">
           <ProceduralCanvas mode={slot.fallback} />
         </div>
       ) : null}
       {showVideo ? (
         <video
           ref={videoCbRef}
-          className="relative w-full h-full object-cover"
+          className="relative z-[1] w-full h-full object-cover"
           style={{ objectPosition, opacity: dim ? 0.45 : 1 }}
           poster={slot.poster}
           muted
@@ -98,11 +104,11 @@ export function MediaSlot({
           autoPlay
           preload="auto"
           aria-hidden
+          onLoadedData={() => setHasFrame(true)}
           onPlaying={() => {
-            setIsPlaying(true);
+            setHasFrame(true);
             setShowFallback(false);
           }}
-          onPause={() => setIsPlaying(false)}
           onError={() => setErrored(true)}
         >
           {slot.webm ? <source src={slot.webm} type="video/webm" /> : null}
@@ -112,3 +118,4 @@ export function MediaSlot({
     </div>
   );
 }
+
