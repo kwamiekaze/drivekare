@@ -76,9 +76,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "DriveKare — Auto Care Anywhere" },
-      { name: "description", content: "Luxury mobile auto care. Detailing, oil changes, tires, batteries, and diagnostics — we come to you." },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { title: "DriveKare — Care That Comes To You" },
+      { name: "description", content: "Luxury mobile auto care. Detailing, oil changes, tires, batteries, and diagnostics — care that comes to you." },
       { name: "author", content: "DriveKare" },
       { name: "theme-color", content: "#0A0A0B" },
       { property: "og:site_name", content: "DriveKare" },
@@ -87,7 +87,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", type: "image/png", href: "/brand/dk-favicon.png" },
+      { rel: "apple-touch-icon", href: "/brand/dk-badge-192.webp" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@300;400;500;600;700&display=swap" },

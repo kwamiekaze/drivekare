@@ -3,18 +3,10 @@ import { useEffect } from "react";
 import { Splash } from "../components/Splash";
 import { Nav } from "../components/Nav";
 import { Hero } from "../components/Hero";
-import { Marquee } from "../components/Marquee";
-import { Services } from "../components/Services";
-import { Reveal } from "../components/Reveal";
-import { Process } from "../components/Process";
-import { Stats } from "../components/Stats";
-import { ServiceArea } from "../components/ServiceArea";
-import { Testimonials } from "../components/Testimonials";
-import { Finale } from "../components/Finale";
-import { Footer } from "../components/Footer";
 import { CustomCursor } from "../components/CustomCursor";
-import { ScrollProgress } from "../components/ScrollProgress";
-import { useLenis } from "../lib/use-lenis";
+import { Overlays } from "../components/Overlays";
+import { OverlayProvider } from "../lib/overlay-context";
+import { AuthProvider } from "../lib/auth-context";
 import { site } from "../content/site";
 
 export const Route = createFileRoute("/")({
@@ -33,26 +25,20 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  useLenis();
   useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
   return (
-    <div className="relative bg-[#0A0A0B] text-neutral-100">
-      <Splash />
-      <ScrollProgress />
-      <CustomCursor />
-      <Nav />
-      <Hero />
-      <Marquee />
-      <Services />
-      <Reveal />
-      <Process />
-      <Stats />
-      <ServiceArea />
-      <Testimonials />
-      <Finale />
-      <Footer />
-    </div>
+    <AuthProvider>
+      <OverlayProvider>
+        <div className="relative bg-[#0A0A0B] text-neutral-100 overflow-hidden" style={{ height: "100dvh" }}>
+          <Splash />
+          <CustomCursor />
+          <Nav />
+          <Hero />
+          <Overlays />
+        </div>
+      </OverlayProvider>
+    </AuthProvider>
   );
 }
