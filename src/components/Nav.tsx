@@ -21,12 +21,13 @@ export function Nav() {
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-[110] transition-all duration-300 px-5 md:px-8 ${scrolled ? "frost py-3" : "py-5"}`}
+      className={`fixed top-0 inset-x-0 z-[110] transition-all duration-300 ${scrolled ? "frost py-3" : "py-5"}`}
       style={{
         paddingTop: "calc(env(safe-area-inset-top) + 12px)",
-        paddingLeft: "max(1.25rem, env(safe-area-inset-left))",
-        paddingRight: "max(1.25rem, env(safe-area-inset-right))",
+        paddingLeft: "max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-left))",
+        paddingRight: "max(clamp(1.25rem, 3vw, 2rem), env(safe-area-inset-right))",
       }}
+
     >
       <div className="mx-auto max-w-[1400px] flex items-center justify-between gap-3">
 
