@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useOverlay } from "../lib/overlay-context";
 import { useAuth } from "../lib/auth-context";
 import { site } from "../content/site";
+import dkLogo from "../assets/dk-logo.png.asset.json";
+
 
 export function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -23,12 +25,22 @@ export function Nav() {
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}
     >
       <div className="mx-auto max-w-[1400px] px-5 md:px-8 flex items-center justify-between gap-4">
-        <span
-          className="slogan-amatic whitespace-nowrap leading-none"
-          style={{ fontSize: "clamp(1.1rem, 4.5vw, 1.6rem)" }}
-        >
-          {site.slogan}
-        </span>
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <img
+            src={dkLogo.url}
+            alt="DriveKare DK logo"
+            className="block w-auto shrink-0 select-none"
+            style={{ height: "clamp(1.4rem, 5.6vw, 2rem)" }}
+            draggable={false}
+          />
+          <span
+            className="slogan-amatic whitespace-nowrap leading-none"
+            style={{ fontSize: "clamp(1.1rem, 4.5vw, 1.6rem)" }}
+          >
+            {site.slogan}
+          </span>
+        </div>
+
 
         <div className="flex items-center gap-3">
           {user && (

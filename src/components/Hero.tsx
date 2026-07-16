@@ -21,7 +21,7 @@ function installHeroUnlock() {
 }
 
 export function Hero() {
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const { open } = useOverlay();
@@ -145,13 +145,8 @@ export function Hero() {
           paddingBottom: "calc(env(safe-area-inset-bottom) + 32px)",
         }}
       >
-        <h1
-          ref={titleRef}
-          className="slogan-amatic uppercase max-w-[95vw]"
-          aria-label={site.hero.title}
-        >
-          {site.hero.title}
-        </h1>
+        <div ref={titleRef} aria-hidden className="sr-only" />
+
 
         <div className="mt-auto flex justify-center md:justify-end pointer-events-auto">
           <button
