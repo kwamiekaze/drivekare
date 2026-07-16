@@ -103,6 +103,7 @@ export function Hero() {
           slot={media.heroVideo}
           className="w-full h-full"
           objectPosition="center 68%"
+          eager
         />
       </div>
       {/* Warm spotlight pool lift — reinforces the video's own light */}
