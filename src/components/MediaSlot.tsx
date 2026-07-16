@@ -102,7 +102,7 @@ export function MediaSlot({
       const v = videoRef.current;
       if (v) pausedVideos.delete(v);
     };
-  }, []);
+  }, [eager]);
 
   const showVideo = !!slot.src && !errored;
 
