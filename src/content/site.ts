@@ -8,15 +8,15 @@ export type MediaSlot = {
 
 export const media = {
   heroVideo: {
-    src: "/videos/hero-bear-v2.mp4",
-    webm: "/videos/hero-bear-v2.webm",
-    poster: "/videos/hero-bear-poster-v2.jpg",
+    src: "/videos/hero-bear-v3.mp4",
+    webm: "/videos/hero-bear-v3.webm",
+    poster: "/videos/hero-bear-poster-v3.jpg",
     fallback: "lightTrails",
   } as MediaSlot,
   bottomVideo: {
-    src: "/videos/hero-bear-v2.mp4",
-    webm: "/videos/hero-bear-v2.webm",
-    poster: "/videos/hero-bear-poster-v2.jpg",
+    src: "/videos/hero-bear-v3.mp4",
+    webm: "/videos/hero-bear-v3.webm",
+    poster: "/videos/hero-bear-poster-v3.jpg",
     fallback: "lightTrails",
   } as MediaSlot,
   revealVideo: { src: undefined, poster: undefined, fallback: "chromeReflect" } as MediaSlot,
@@ -27,8 +27,7 @@ export const media = {
 };
 
 export const wordmark = {
-  src1x: "/brand/drivekare-wordmark.webp",
-  src2x: "/brand/drivekare-wordmark@2x.webp",
+  src: "/brand/drivekare-wordmark.png",
   alt: "Drive Kare — Care that comes to you",
 };
 
