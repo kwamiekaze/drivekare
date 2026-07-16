@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { site, media } from "../content/site";
-import { renderPolishTitle } from "../lib/polish-title";
 import { MediaSlot } from "./MediaSlot";
 import { HeroModel } from "./HeroModel";
 import { useOverlay } from "../lib/overlay-context";
