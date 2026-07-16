@@ -131,16 +131,14 @@ export function Hero() {
       </div>
 
       {/* Copy — eyebrow top-left, colossal headline anchored to bottom */}
-      <div className="relative z-10 min-h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28 pointer-events-none">
+      <div className="relative z-10 h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28 pointer-events-none">
         <div className="text-[10px] md:text-xs tracking-[0.5em] uppercase text-neutral-400 mb-4">
           {site.hero.eyebrow}
         </div>
 
-        <div className="flex-1" />
-
         <h1
           ref={titleRef}
-          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[14vw] md:text-[11vw] lg:text-[10.5vw]"
+          className="mt-auto font-display uppercase leading-[0.86] tracking-[-0.01em] text-[14vw] md:text-[11vw] lg:text-[10.5vw]"
           aria-label={site.hero.title}
         >
           {renderPolishTitle(site.hero.title, "hero")}
