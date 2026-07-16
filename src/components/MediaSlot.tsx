@@ -86,9 +86,11 @@ export function MediaSlot({
             .catch(() => {
               pausedVideos.add(v);
             });
-        } else if (hasPlayedRef.current) {
+        } else if (hasPlayedRef.current && !eager) {
           // Only pause after we successfully started playing at least once —
-          // avoids racing the initial play attempt on iOS.
+          // avoids racing the initial play attempt on iOS. Never pause the
+          // hero (eager) video: layout thrash from pinning / splash unmount
+          // can briefly report the container as out of view.
           v.pause();
         }
       },
