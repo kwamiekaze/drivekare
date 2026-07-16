@@ -3,12 +3,18 @@
 
 export type MediaSlot = {
   src?: string;
+  webm?: string;
   poster?: string;
   fallback: "lightTrails" | "chromeReflect" | "roadStreaks" | "gradient";
 };
 
 export const media = {
-  heroVideo: { src: undefined, poster: undefined, fallback: "lightTrails" } as MediaSlot,
+  heroVideo: {
+    src: "/videos/hero-bear-v1.mp4",
+    webm: "/videos/hero-bear-v1.webm",
+    poster: "/videos/hero-bear-poster-v1.jpg",
+    fallback: "lightTrails",
+  } as MediaSlot,
   revealVideo: { src: undefined, poster: undefined, fallback: "chromeReflect" } as MediaSlot,
   roadVideo: { src: undefined, poster: undefined, fallback: "roadStreaks" } as MediaSlot,
   heroModel: { src: "/models/dk-bear.glb" as string | undefined },
