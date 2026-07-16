@@ -2,16 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { ProceduralCanvas } from "../lib/procedural-fallback";
 import type { MediaSlot as MediaSlotT } from "../content/site";
 
-export function MediaSlot({ slot, className = "" }: { slot: MediaSlotT; className?: string }) {
+export function MediaSlot({
+  slot,
+  className = "",
+  objectPosition = "center",
+}: {
+  slot: MediaSlotT;
+  className?: string;
+  objectPosition?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [errored, setErrored] = useState(false);
 
   useEffect(() => {
     if (!ref.current) return;
     const io = new IntersectionObserver(
       ([e]) => {
-        setVisible(e.isIntersecting);
         const v = videoRef.current;
         if (!v) return;
         if (e.isIntersecting) v.play().catch(() => {});
@@ -23,22 +30,29 @@ export function MediaSlot({ slot, className = "" }: { slot: MediaSlotT; classNam
     return () => io.disconnect();
   }, []);
 
+  const showVideo = !!slot.src && !errored;
+
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
-      {slot.src ? (
+      {showVideo ? (
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
-          src={slot.src}
+          style={{ objectPosition }}
           poster={slot.poster}
           muted
           playsInline
           loop
+          autoPlay
           preload="metadata"
           aria-hidden
-        />
+          onError={() => setErrored(true)}
+        >
+          {slot.webm ? <source src={slot.webm} type="video/webm" /> : null}
+          <source src={slot.src} type="video/mp4" />
+        </video>
       ) : (
-        visible !== null && <ProceduralCanvas mode={slot.fallback} />
+        <ProceduralCanvas mode={slot.fallback} />
       )}
     </div>
   );
