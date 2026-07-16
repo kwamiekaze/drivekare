@@ -1,8 +1,24 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { site, media } from "../content/site";
-import { MediaSlot } from "./MediaSlot";
 import { HeroModel } from "./HeroModel";
 import { useOverlay } from "../lib/overlay-context";
+
+// One-time document-level unlock (last-resort for iOS Low Power Mode etc.)
+let unlockInstalled = false;
+const pausedHeroVideos = new Set<HTMLVideoElement>();
+function installHeroUnlock() {
+  if (unlockInstalled || typeof document === "undefined") return;
+  unlockInstalled = true;
+  const retry = () => {
+    pausedHeroVideos.forEach((v) => {
+      v.muted = true;
+      v.play().catch(() => {});
+    });
+  };
+  document.addEventListener("touchstart", retry, { capture: true, passive: true });
+  document.addEventListener("pointerdown", retry, { capture: true });
+  document.addEventListener("click", retry, { capture: true });
+}
 
 export function Hero() {
   const titleRef = useRef<HTMLHeadingElement>(null);
