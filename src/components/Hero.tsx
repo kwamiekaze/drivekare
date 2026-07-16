@@ -120,11 +120,10 @@ export function Hero() {
 
       {/* 3D bear stage — between nav and headline, feet in the spotlight pool */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5]"
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5] w-[92vw] max-w-[520px] md:w-[52vw] md:max-w-[560px]"
         style={{
-          top: "clamp(88px, 12vh, 140px)",
-          width: "min(60vw, 520px)",
-          height: "min(52vh, 560px)",
+          top: "clamp(88px, 11vh, 140px)",
+          height: "clamp(360px, 46vh, 560px)",
         }}
       >
         <HeroModel />
