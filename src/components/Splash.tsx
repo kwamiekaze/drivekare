@@ -26,6 +26,9 @@ export function Splash() {
     if (leaving) return;
     setLeaving(true);
     sessionStorage.setItem(KEY, "1");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("dk-splash-dismissed"));
+    }
     setTimeout(() => setGone(true), 900);
   };
 
