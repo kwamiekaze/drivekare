@@ -63,19 +63,40 @@ function GroundedBear({
   spinningRef: React.MutableRefObject<boolean>;
 }) {
   const { scene } = useGLTF(url, true);
+  const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
+
+  const rawMetrics = useMemo(() => {
+    const box = new THREE.Box3().setFromObject(scene);
+    const sz = new THREE.Vector3();
+    const ctr = new THREE.Vector3();
+    box.getSize(sz);
+    box.getCenter(ctr);
+    return { sz, ctr, minY: box.min.y };
+  }, [scene]);
 
   const { offset, scale } = useMemo(() => {
-    const box = new THREE.Box3().setFromObject(scene);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
-    const maxDim = Math.max(size.x, size.y, size.z) || 1;
-    const s = 2.4 / maxDim;
-    // recenter X/Z; Y offset so scaled minY lands at 0 (feet on the ground)
-    const off = new THREE.Vector3(-center.x, -box.min.y, -center.z);
+    const { sz, ctr, minY } = rawMetrics;
+    const maxDim = Math.max(sz.x, sz.y, sz.z) || 1;
+    const baseScale = 2.2 / maxDim;
+
+    // Frustum-fit: ensure the (scaled) model fits vertically AND horizontally
+    // with ~10% padding inside the camera's view at the model's Z (~0).
+    const aim = new THREE.Vector3(0, 0.85, 0);
+    const camDist = camera.position.distanceTo(aim) || 3.8;
+    const fovRad = (camera.fov * Math.PI) / 180;
+    const aspect = size.width && size.height ? size.width / size.height : 1;
+    const viewH = 2 * Math.tan(fovRad / 2) * camDist;
+    const viewW = viewH * aspect;
+    const padding = 0.86; // ~7% margin top/bottom
+
+    const fitByH = (viewH * padding) / sz.y;
+    const fitByW = (viewW * padding) / sz.x;
+    const s = Math.min(baseScale, fitByH, fitByW);
+
+    const off = new THREE.Vector3(-ctr.x, -minY, -ctr.z);
     return { offset: off, scale: s };
-  }, [scene]);
+  }, [rawMetrics, camera, size.width, size.height]);
 
   return (
     <Turntable spinningRef={spinningRef}>
