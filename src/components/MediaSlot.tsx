@@ -67,7 +67,7 @@ export function MediaSlot({
     tryPlay();
     el.addEventListener("loadedmetadata", tryPlay);
     el.addEventListener("canplay", tryPlay);
-  }, []);
+  }, [eager]);
 
   useEffect(() => {
     installUnlock();
