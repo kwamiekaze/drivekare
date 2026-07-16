@@ -70,8 +70,22 @@ export function Hero() {
       className="relative w-full overflow-hidden carbon"
       style={{ height: "100dvh", background: "#0A0A0B" }}
     >
-      <div className="absolute inset-0" style={{ filter: "brightness(0.62)" }}>
-        <MediaSlot slot={media.heroVideo} className="w-full h-full" objectPosition="center 68%" eager />
+      <div className="absolute inset-0 overflow-hidden" style={{ filter: "brightness(0.62)" }}>
+        <video
+          ref={videoCbRef}
+          className="w-full h-full object-cover"
+          style={{ objectPosition: "center 68%" }}
+          poster={media.heroVideo.poster}
+          muted
+          playsInline
+          loop
+          autoPlay
+          preload="auto"
+          aria-hidden
+        >
+          {media.heroVideo.webm ? <source src={media.heroVideo.webm} type="video/webm" /> : null}
+          <source src={media.heroVideo.src} type="video/mp4" />
+        </video>
       </div>
       <div
         className="absolute inset-0 pointer-events-none"
