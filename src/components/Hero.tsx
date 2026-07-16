@@ -97,32 +97,44 @@ export function Hero() {
       className="relative w-full min-h-screen overflow-hidden carbon"
       style={{ background: "#0A0A0B" }}
     >
-      {/* Background media */}
-      <div className="absolute inset-0 opacity-45">
+      {/* Background media — full-bleed cover, center-anchored spotlight */}
+      <div className="absolute inset-0 opacity-55">
         <MediaSlot slot={media.heroVideo} className="w-full h-full" />
       </div>
-      <div className="absolute inset-0" style={{
-        background: "radial-gradient(60% 60% at 50% 40%, rgba(0,0,0,0) 0%, rgba(10,10,11,0.8) 80%)",
-      }} />
+      {/* Warm ground-spotlight pool (procedural stand-in until real video) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(38% 26% at 50% 82%, rgba(255,214,150,0.28) 0%, rgba(240,138,29,0.10) 40%, rgba(0,0,0,0) 70%)",
+        }}
+      />
+      {/* Edge vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(80% 80% at 50% 45%, rgba(0,0,0,0) 0%, rgba(10,10,11,0.85) 85%)",
+        }}
+      />
 
-      {/* 3D model stage — between nav (top 80px) and headline */}
-      <div className="absolute left-1/2 -translate-x-1/2 top-[16vh] w-[80vw] max-w-[720px] h-[34vh] md:h-[38vh] pointer-events-auto">
-        <HeroModel />
-      </div>
-
-      {/* Copy */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-end pb-16 md:pb-24 px-5 md:px-10 pt-[76vh] md:pt-[70vh]">
+      {/* Copy — headline anchored to upper third */}
+      <div className="relative z-10 min-h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28">
         <div className="text-[10px] md:text-xs tracking-[0.5em] uppercase text-neutral-400 mb-4">
           {site.hero.eyebrow}
         </div>
         <h1
           ref={titleRef}
-          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[16vw] md:text-[13vw] lg:text-[12vw]"
+          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[15vw] md:text-[12vw] lg:text-[11vw]"
           aria-label={site.hero.title}
         >
           {renderPolishTitle(site.hero.title, "hero")}
         </h1>
-        <div className="mt-6 md:mt-8 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+
+        {/* Spacer — bear owns this zone */}
+        <div className="flex-1" />
+
+        <div className="pb-10 md:pb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <p className="max-w-md text-sm md:text-base text-neutral-300 leading-relaxed">
             {site.hero.sub}
           </p>
@@ -137,6 +149,18 @@ export function Hero() {
             <span aria-hidden>→</span>
           </Link>
         </div>
+      </div>
+
+      {/* 3D bear stage — center-lower, feet anchored in the spotlight pool */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5]"
+        style={{
+          bottom: "8vh",
+          width: "min(78vw, 640px)",
+          height: "min(62vh, 640px)",
+        }}
+      >
+        <HeroModel />
       </div>
     </section>
   );
