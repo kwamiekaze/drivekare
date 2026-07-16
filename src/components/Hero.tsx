@@ -23,7 +23,43 @@ function installHeroUnlock() {
 export function Hero() {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const ctaRef = useRef<HTMLButtonElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const { open } = useOverlay();
+
+  const videoCbRef = useCallback((el: HTMLVideoElement | null) => {
+    videoRef.current = el;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    el.setAttribute("muted", "");
+    el.setAttribute("playsinline", "");
+    el.setAttribute("webkit-playsinline", "");
+    el.setAttribute("autoplay", "");
+    el.setAttribute("loop", "");
+    const tryPlay = () => {
+      el.muted = true;
+      const p = el.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => pausedHeroVideos.delete(el)).catch(() => pausedHeroVideos.add(el));
+      }
+    };
+    tryPlay();
+    el.addEventListener("loadedmetadata", tryPlay);
+    el.addEventListener("canplay", tryPlay);
+    installHeroUnlock();
+  }, []);
+
+  useEffect(() => {
+    const onSplashDismiss = () => {
+      const v = videoRef.current;
+      if (!v) return;
+      v.muted = true;
+      v.play().catch(() => pausedHeroVideos.add(v));
+    };
+    window.addEventListener("dk-splash-dismissed", onSplashDismiss);
+    return () => window.removeEventListener("dk-splash-dismissed", onSplashDismiss);
+  }, []);
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
