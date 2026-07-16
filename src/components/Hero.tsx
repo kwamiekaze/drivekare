@@ -93,10 +93,10 @@ export function Hero() {
       <div
         className="absolute left-1/2 z-10 pointer-events-none"
         style={{
-          top: "50%",
+          top: "48%",
           transform: "translate(-50%, -50%)",
-          width: "min(92vw, 620px)",
-          height: "min(78vh, 720px)",
+          width: "min(92vw, 560px)",
+          height: "min(62vh, 560px)",
         }}
       >
         <div className="w-full h-full pointer-events-auto">
