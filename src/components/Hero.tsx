@@ -97,53 +97,45 @@ export function Hero() {
       className="relative w-full min-h-screen overflow-hidden carbon"
       style={{ background: "#0A0A0B" }}
     >
-      {/* Background media — full-bleed cover, center-anchored spotlight */}
-      <div className="absolute inset-0 opacity-55">
-        <MediaSlot slot={media.heroVideo} className="w-full h-full" />
+      {/* Background hero video — full-bleed, dimmed so the bear is the star */}
+      <div className="absolute inset-0" style={{ filter: "brightness(0.62)" }}>
+        <MediaSlot
+          slot={media.heroVideo}
+          className="w-full h-full"
+          objectPosition="center 68%"
+        />
       </div>
-      {/* Warm ground-spotlight pool (procedural stand-in until real video) */}
+      {/* Warm spotlight pool lift — reinforces the video's own light */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(38% 26% at 50% 82%, rgba(255,214,150,0.28) 0%, rgba(240,138,29,0.10) 40%, rgba(0,0,0,0) 70%)",
+            "radial-gradient(34% 22% at 50% 82%, rgba(255,214,150,0.22) 0%, rgba(240,138,29,0.08) 45%, rgba(0,0,0,0) 72%)",
         }}
       />
-      {/* Edge vignette */}
+      {/* Edge vignette to draw the eye to center */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(80% 80% at 50% 45%, rgba(0,0,0,0) 0%, rgba(10,10,11,0.85) 85%)",
+            "radial-gradient(85% 85% at 50% 55%, rgba(0,0,0,0) 0%, rgba(10,10,11,0.78) 88%)",
         }}
       />
 
-      {/* 3D bear stage — between nav and headline, feet in the spotlight pool */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5] w-[92vw] max-w-[520px] md:w-[52vw] md:max-w-[560px]"
-        style={{
-          top: "clamp(88px, 11vh, 140px)",
-          height: "clamp(360px, 46vh, 560px)",
-        }}
-      >
-        <HeroModel />
-      </div>
-
-      {/* Copy — eyebrow top-left, colossal headline anchored to bottom */}
-      <div className="relative z-10 h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28 pointer-events-none">
+      {/* Copy — eyebrow + colossal headline anchored to upper third */}
+      <div className="relative z-10 min-h-screen flex flex-col px-5 md:px-10 pt-24 md:pt-28 pointer-events-none">
         <div className="text-[10px] md:text-xs tracking-[0.5em] uppercase text-neutral-400 mb-4">
           {site.hero.eyebrow}
         </div>
-
         <h1
           ref={titleRef}
-          className="mt-auto font-display uppercase leading-[0.86] tracking-[-0.01em] text-[14vw] md:text-[11vw] lg:text-[10.5vw]"
+          className="font-display uppercase leading-[0.86] tracking-[-0.01em] text-[13vw] md:text-[10.5vw] lg:text-[10vw]"
           aria-label={site.hero.title}
         >
           {renderPolishTitle(site.hero.title, "hero")}
         </h1>
 
-        <div className="mt-6 md:mt-8 pb-10 md:pb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6 pointer-events-auto">
+        <div className="mt-auto pb-8 md:pb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6 pointer-events-auto">
           <p className="max-w-md text-sm md:text-base text-neutral-300 leading-relaxed">
             {site.hero.sub}
           </p>
@@ -159,6 +151,20 @@ export function Hero() {
           </Link>
         </div>
       </div>
+
+      {/* 3D bear stage — feet planted in the video's spotlight pool (~78% down) */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-auto z-[5] w-[92vw] max-w-[520px] md:w-[46vw] md:max-w-[520px]"
+        style={{
+          bottom: "clamp(120px, 14vh, 200px)",
+          height: "clamp(340px, 48vh, 560px)",
+        }}
+      >
+        <HeroModel />
+      </div>
+    </section>
+  );
+}
     </section>
   );
 }
