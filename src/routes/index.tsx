@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { Splash } from "../components/Splash";
 import { Nav } from "../components/Nav";
 import { Hero } from "../components/Hero";
+import { GarageScroll } from "../components/GarageScroll";
+import { BottomBand } from "../components/BottomBand";
 import { CustomCursor } from "../components/CustomCursor";
 import { Overlays } from "../components/Overlays";
 import { OverlayProvider } from "../lib/overlay-context";
@@ -31,11 +33,13 @@ function Home() {
   return (
     <AuthProvider>
       <OverlayProvider>
-        <div className="relative bg-[#0A0A0B] text-neutral-100 overflow-hidden" style={{ height: "100dvh" }}>
+        <div className="relative bg-[#0A0A0B] text-neutral-100">
           <Splash />
           <CustomCursor />
           <Nav />
           <Hero />
+          <GarageScroll />
+          <BottomBand />
           <Overlays />
         </div>
       </OverlayProvider>
