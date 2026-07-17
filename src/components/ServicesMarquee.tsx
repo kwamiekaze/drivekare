@@ -7,7 +7,6 @@ const ITEMS = [
   "BATTERY & ELECTRICAL",
   "DIAGNOSTICS",
   "FLEET CARE",
-  "MUCH MORE",
 ];
 
 function Row() {
