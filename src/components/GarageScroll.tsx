@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ServicesMarquee } from "./ServicesMarquee";
 
 const SCRUB_MP4 = "/videos/garage-scrub-v1.mp4";
 const SCRUB_WEBM = "/videos/garage-scrub-v1.webm";
@@ -253,6 +254,8 @@ export function GarageScroll() {
             Step Inside
           </span>
         </div>
+
+        <ServicesMarquee />
       </div>
     </section>
   );
