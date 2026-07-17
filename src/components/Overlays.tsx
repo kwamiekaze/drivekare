@@ -379,7 +379,18 @@ export function BookOverlay() {
             <Field label="ZIP">
               <input value={form.zip} onChange={(e) => set("zip", e.target.value)} className={inputCls} autoComplete="postal-code" inputMode="numeric" required />
             </Field>
+            <Field label="Photo (optional)">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onPhotoChange}
+                className="block w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:tracking-[0.24em] file:uppercase file:font-semibold file:bg-white/5 file:text-[#F08A1D] hover:file:bg-white/10"
+              />
+              {photo && <p className="mt-2 text-xs text-neutral-500">{photo.name} · {(photo.size / (1024 * 1024)).toFixed(2)} MB</p>}
+              {photoErr && <p className="mt-2 text-xs text-red-400">{photoErr}</p>}
+            </Field>
             {err && <p className="text-sm text-red-400">{err}</p>}
+
             <button
               type="submit"
               disabled={submitting}
