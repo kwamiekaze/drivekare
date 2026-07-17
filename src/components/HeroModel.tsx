@@ -190,18 +190,17 @@ function BearHitGate({
 function HeroCanvas() {
   const spinningRef = useRef(true);
   const resumeTimer = useRef<number | null>(null);
-  const [cursor, setCursor] = useState<"grab" | "grabbing">("grab");
+  const bearRef = useRef<THREE.Group | null>(null);
+  const controlsRef = useRef<any>(null);
 
   const pauseSpin = () => {
     spinningRef.current = false;
-    setCursor("grabbing");
     if (resumeTimer.current) {
       window.clearTimeout(resumeTimer.current);
       resumeTimer.current = null;
     }
   };
   const scheduleResume = () => {
-    setCursor("grab");
     if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
     resumeTimer.current = window.setTimeout(() => {
       spinningRef.current = true;
@@ -220,9 +219,8 @@ function HeroCanvas() {
       shadows
       camera={{ position: [0, 1.5, 3.8], fov: 32 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-      style={{ background: "transparent", cursor, touchAction: "pan-y" }}
+      style={{ background: "transparent", touchAction: "pan-y" }}
       onCreated={({ gl }) => {
-        // Allow vertical page scroll to pass through canvas on touch devices.
         gl.domElement.style.touchAction = "pan-y";
         setTimeout(() => {
           gl.domElement.style.touchAction = "pan-y";
@@ -233,11 +231,7 @@ function HeroCanvas() {
       onPointerLeave={scheduleResume}
     >
       <CameraAim target={[0, 0.85, 0]} />
-
-      {/* Very low ambient — spotlight must dominate */}
       <ambientLight intensity={0.22} />
-
-      {/* Warm-tinted key spotlight from above-front, matches the video's ground pool */}
       <spotLight
         position={[0, 5.5, 2.2]}
         target-position={[0, 0.8, 0]}
@@ -251,13 +245,11 @@ function HeroCanvas() {
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
-
-      {/* Faint ignition-orange rim from behind */}
       <directionalLight position={[-2, 2.4, -3]} intensity={0.75} color="#FFA940" />
       <directionalLight position={[2.5, 2, -2.5]} intensity={0.35} color="#FFC98A" />
 
       <Suspense fallback={<RingLoader />}>
-        <ModelContent spinningRef={spinningRef} />
+        <ModelContent spinningRef={spinningRef} bearRef={bearRef} />
         <Environment preset="city" environmentIntensity={0.4} />
         <ContactShadows
           position={[0, 0.001, 0]}
@@ -269,8 +261,11 @@ function HeroCanvas() {
         />
       </Suspense>
 
+      <BearHitGate bearRef={bearRef} controlsRef={controlsRef} />
       <OrbitControls
+        ref={controlsRef}
         makeDefault
+        enabled={false}
         enableZoom={false}
         enablePan={false}
         enableDamping
@@ -283,6 +278,7 @@ function HeroCanvas() {
     </Canvas>
   );
 }
+
 
 function CameraAim({ target }: { target: [number, number, number] }) {
   useFrame(({ camera }) => {
