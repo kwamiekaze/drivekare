@@ -66,8 +66,8 @@ export function Splash() {
       onClick={leave}
       className="fixed inset-0 z-[200] bg-[#0A0A0B] overflow-hidden cursor-pointer"
       style={{
-        clipPath: leaving ? "inset(0 0 100% 0)" : "inset(0 0 0% 0)",
-        transition: "clip-path 0.9s cubic-bezier(0.76,0,0.24,1)",
+        opacity: leaving ? 0 : 1,
+        transition: "opacity 350ms ease-out",
       }}
       aria-label="Intro"
     >
@@ -94,33 +94,6 @@ export function Splash() {
         </video>
       )}
 
-      {/* Vignette to lift overlay legibility */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(70% 60% at 50% 45%, rgba(0,0,0,0) 0%, rgba(10,10,11,0.55) 78%, rgba(10,10,11,0.85) 100%)",
-        }}
-      />
-
-      {/* Wordmark centered */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <img
-          src={dkLogo.url}
-          alt={site.brand}
-          draggable={false}
-          className="select-none"
-          style={{
-            height: "clamp(96px, 18vw, 220px)",
-            width: "auto",
-            opacity: 0,
-            transform: "scale(0.92)",
-            animation: "dkSplashMark 1.1s cubic-bezier(0.2,0.9,0.2,1) 0.25s forwards",
-            filter: "drop-shadow(0 6px 30px rgba(0,0,0,0.55))",
-          }}
-        />
-      </div>
-
       <div
         className="absolute bottom-8 inset-x-0 flex justify-center text-[10px] tracking-[0.4em] text-neutral-300 pointer-events-none"
         style={{ opacity: 0, animation: "dkSplashTap 0.8s ease 0.9s forwards" }}
@@ -129,14 +102,9 @@ export function Splash() {
       </div>
 
       <style>{`
-        @keyframes dkSplashMark {
-          0% { opacity: 0; transform: scale(0.92); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-        @keyframes dkSplashTap {
-          to { opacity: 0.85; }
-        }
+        @keyframes dkSplashTap { to { opacity: 0.85; } }
       `}</style>
     </div>
   );
 }
+
