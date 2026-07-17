@@ -29,7 +29,7 @@ export function Splash() {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("dk-splash-dismissed"));
     }
-    setTimeout(() => setGone(true), 900);
+    setTimeout(() => setGone(true), 400);
   }, []);
 
   const videoCbRef = useCallback((el: HTMLVideoElement | null) => {
