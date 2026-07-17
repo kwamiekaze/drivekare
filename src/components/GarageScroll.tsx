@@ -12,16 +12,55 @@ export function GarageScroll() {
   const currentRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const durationRef = useRef(0);
+  const primedRef = useRef(false);
   const [reduced, setReduced] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [metaLoaded, setMetaLoaded] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
+  // iOS decoder prime: muted play() then pause+seek so subsequent currentTime writes paint.
+  const primeDecoder = useCallback(() => {
+    const v = videoRef.current;
+    if (!v || primedRef.current) return;
+    try {
+      v.muted = true;
+      const p = v.play();
+      if (p && typeof p.then === "function") {
+        p.then(() => {
+          try {
+            v.pause();
+            v.currentTime = 0.001;
+            primedRef.current = true;
+          } catch {}
+        }).catch(() => {
+          // Low Power Mode / autoplay blocked — the touchstart backup below will retry.
+        });
+      } else {
+        try { v.pause(); v.currentTime = 0.001; primedRef.current = true; } catch {}
+      }
+    } catch {}
+  }, []);
+
+  // One-time gesture backup for iOS Low Power Mode
+  useEffect(() => {
+    if (reduced) return;
+    const onGesture = () => {
+      if (primedRef.current) return;
+      primeDecoder();
+    };
+    document.addEventListener("touchstart", onGesture, { once: true, passive: true });
+    document.addEventListener("pointerdown", onGesture, { once: true });
+    return () => {
+      document.removeEventListener("touchstart", onGesture);
+      document.removeEventListener("pointerdown", onGesture);
+    };
+  }, [reduced, primeDecoder]);
+
   // Lazy fetch the scrub video as a blob so seeks are instant.
-  // Fallback: if blob fetch fails or is slow, direct URL is already set as src.
   useEffect(() => {
     if (reduced) return;
     const section = sectionRef.current;
@@ -34,7 +73,9 @@ export function GarageScroll() {
       started = true;
       try {
         const v = videoRef.current;
-        const preferWebm = !!v && !!v.canPlayType('video/webm; codecs="vp9"');
+        // Safari returns "" for webm/vp9 (falsy) → picks MP4. Chromium returns "probably".
+        const webmSupport = v ? v.canPlayType('video/webm; codecs="vp9"') : "";
+        const preferWebm = webmSupport === "probably" || webmSupport === "maybe";
         const url1 = preferWebm ? SCRUB_WEBM : SCRUB_MP4;
         const res = await fetch(url1);
         if (!res.ok) return;
@@ -50,6 +91,7 @@ export function GarageScroll() {
             "loadedmetadata",
             () => {
               try { v.currentTime = t; } catch {}
+              primeDecoder();
             },
             { once: true }
           );
@@ -75,14 +117,16 @@ export function GarageScroll() {
       io.disconnect();
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
     };
-  }, [reduced]);
+  }, [reduced, primeDecoder]);
 
   const onMeta = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
     durationRef.current = v.duration || 0;
+    setMetaLoaded(true);
     try { v.currentTime = 0; } catch {}
-  }, []);
+    primeDecoder();
+  }, [primeDecoder]);
 
   // Scroll → target time
   useEffect(() => {
@@ -115,9 +159,15 @@ export function GarageScroll() {
         const c = currentRef.current;
         const next = c + (t - c) * 0.18;
         currentRef.current = next;
-        // Only write when readyState is enough and delta is meaningful
         if (v.readyState >= 2 && Math.abs(next - v.currentTime) > 0.008) {
-          try { v.currentTime = next; } catch {}
+          try {
+            // All-intra encode → fastSeek is frame-accurate and much faster on Safari.
+            if (typeof (v as HTMLVideoElement & { fastSeek?: (t: number) => void }).fastSeek === "function") {
+              (v as HTMLVideoElement & { fastSeek: (t: number) => void }).fastSeek(next);
+            } else {
+              v.currentTime = next;
+            }
+          } catch {}
         }
       }
       rafRef.current = requestAnimationFrame(tick);
@@ -155,7 +205,7 @@ export function GarageScroll() {
               alt=""
               aria-hidden
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ opacity: durationRef.current > 0 ? 0 : 1, transition: "opacity 0.4s ease" }}
+              style={{ opacity: metaLoaded ? 0 : 1, transition: "opacity 0.4s ease" }}
             />
             <video
               ref={(el) => {
