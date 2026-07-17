@@ -21,6 +21,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string
+          photo_path: string | null
           service: string
           zip: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           full_name: string
           id?: string
           phone: string
+          photo_path?: string | null
           service: string
           zip: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string
+          photo_path?: string | null
           service?: string
           zip?: string
         }
