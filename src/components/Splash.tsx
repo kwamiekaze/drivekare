@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { site } from "../content/site";
-import dkLogo from "../assets/dk-logo.png.asset.json";
 
 const KEY = "dk_splash_done_v1";
 const SPLASH_MP4 = "/videos/garage-splash-v1.mp4";
