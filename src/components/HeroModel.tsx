@@ -58,9 +58,11 @@ function BearMaterialPass({ scene }: { scene: THREE.Object3D }) {
 function GroundedBear({
   url,
   spinningRef,
+  bearRef,
 }: {
   url: string;
   spinningRef: React.MutableRefObject<boolean>;
+  bearRef: React.MutableRefObject<THREE.Group | null>;
 }) {
   const { scene } = useGLTF(url, true);
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
@@ -80,8 +82,6 @@ function GroundedBear({
     const maxDim = Math.max(sz.x, sz.y, sz.z) || 1;
     const baseScale = 2.2 / maxDim;
 
-    // Frustum-fit: ensure the (scaled) model fits vertically AND horizontally
-    // with ~10% padding inside the camera's view at the model's Z (~0).
     const aimY = 0.85;
     const aim = new THREE.Vector3(0, aimY, 0);
     const camDist = camera.position.distanceTo(aim) || 3.8;
@@ -90,8 +90,6 @@ function GroundedBear({
     const viewH = 2 * Math.tan(fovRad / 2) * camDist;
     const viewW = viewH * aspect;
     const padding = 0.88;
-    // Model spans y∈[0, sz.y*s]; aim is at aimY. Top must not exceed
-    // aimY + viewH*padding/2, bottom must not fall below aimY - viewH*padding/2.
     const fitByH = ((viewH * padding) / 2 + aimY) / sz.y;
     const fitByW = (viewW * padding) / sz.x;
     const s = Math.min(baseScale, fitByH, fitByW);
@@ -102,7 +100,7 @@ function GroundedBear({
 
   return (
     <Turntable spinningRef={spinningRef}>
-      <group position={offset} scale={scale}>
+      <group ref={bearRef as any} position={offset} scale={scale}>
         <BearMaterialPass scene={scene} />
         <primitive object={scene} />
       </group>
@@ -130,27 +128,79 @@ function RingLoader() {
   );
 }
 
-function ModelContent({ spinningRef }: { spinningRef: React.MutableRefObject<boolean> }) {
+function ModelContent({
+  spinningRef,
+  bearRef,
+}: {
+  spinningRef: React.MutableRefObject<boolean>;
+  bearRef: React.MutableRefObject<THREE.Group | null>;
+}) {
   const url = MODEL_URL;
   if (!url) return null;
-  return <GroundedBear url={url} spinningRef={spinningRef} />;
+  return <GroundedBear url={url} spinningRef={spinningRef} bearRef={bearRef} />;
 }
+
+/**
+ * Gates OrbitControls by raycasting the pointerdown against the bear meshes.
+ * If the ray misses, controls stay disabled so the page can scroll normally.
+ */
+function BearHitGate({
+  bearRef,
+  controlsRef,
+}: {
+  bearRef: React.MutableRefObject<THREE.Group | null>;
+  controlsRef: React.MutableRefObject<any>;
+}) {
+  const { gl, camera } = useThree();
+  useEffect(() => {
+    const el = gl.domElement;
+    const raycaster = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const hitTest = (clientX: number, clientY: number) => {
+      const bear = bearRef.current;
+      if (!bear) return false;
+      const rect = el.getBoundingClientRect();
+      ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(ndc, camera);
+      return raycaster.intersectObject(bear, true).length > 0;
+    };
+    const onDown = (e: PointerEvent) => {
+      const c = controlsRef.current;
+      if (!c) return;
+      c.enabled = hitTest(e.clientX, e.clientY);
+    };
+    const onRelease = () => {
+      const c = controlsRef.current;
+      if (c) c.enabled = false;
+    };
+    el.addEventListener("pointerdown", onDown, true);
+    window.addEventListener("pointerup", onRelease);
+    window.addEventListener("pointercancel", onRelease);
+    return () => {
+      el.removeEventListener("pointerdown", onDown, true);
+      window.removeEventListener("pointerup", onRelease);
+      window.removeEventListener("pointercancel", onRelease);
+    };
+  }, [gl, camera, bearRef, controlsRef]);
+  return null;
+}
+
 
 function HeroCanvas() {
   const spinningRef = useRef(true);
   const resumeTimer = useRef<number | null>(null);
-  const [cursor, setCursor] = useState<"grab" | "grabbing">("grab");
+  const bearRef = useRef<THREE.Group | null>(null);
+  const controlsRef = useRef<any>(null);
 
   const pauseSpin = () => {
     spinningRef.current = false;
-    setCursor("grabbing");
     if (resumeTimer.current) {
       window.clearTimeout(resumeTimer.current);
       resumeTimer.current = null;
     }
   };
   const scheduleResume = () => {
-    setCursor("grab");
     if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
     resumeTimer.current = window.setTimeout(() => {
       spinningRef.current = true;
@@ -169,9 +219,8 @@ function HeroCanvas() {
       shadows
       camera={{ position: [0, 1.5, 3.8], fov: 32 }}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-      style={{ background: "transparent", cursor, touchAction: "pan-y" }}
+      style={{ background: "transparent", touchAction: "pan-y" }}
       onCreated={({ gl }) => {
-        // Allow vertical page scroll to pass through canvas on touch devices.
         gl.domElement.style.touchAction = "pan-y";
         setTimeout(() => {
           gl.domElement.style.touchAction = "pan-y";
@@ -182,11 +231,7 @@ function HeroCanvas() {
       onPointerLeave={scheduleResume}
     >
       <CameraAim target={[0, 0.85, 0]} />
-
-      {/* Very low ambient — spotlight must dominate */}
       <ambientLight intensity={0.22} />
-
-      {/* Warm-tinted key spotlight from above-front, matches the video's ground pool */}
       <spotLight
         position={[0, 5.5, 2.2]}
         target-position={[0, 0.8, 0]}
@@ -200,13 +245,11 @@ function HeroCanvas() {
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
-
-      {/* Faint ignition-orange rim from behind */}
       <directionalLight position={[-2, 2.4, -3]} intensity={0.75} color="#FFA940" />
       <directionalLight position={[2.5, 2, -2.5]} intensity={0.35} color="#FFC98A" />
 
       <Suspense fallback={<RingLoader />}>
-        <ModelContent spinningRef={spinningRef} />
+        <ModelContent spinningRef={spinningRef} bearRef={bearRef} />
         <Environment preset="city" environmentIntensity={0.4} />
         <ContactShadows
           position={[0, 0.001, 0]}
@@ -218,8 +261,11 @@ function HeroCanvas() {
         />
       </Suspense>
 
+      <BearHitGate bearRef={bearRef} controlsRef={controlsRef} />
       <OrbitControls
+        ref={controlsRef}
         makeDefault
+        enabled={false}
         enableZoom={false}
         enablePan={false}
         enableDamping
@@ -232,6 +278,7 @@ function HeroCanvas() {
     </Canvas>
   );
 }
+
 
 function CameraAim({ target }: { target: [number, number, number] }) {
   useFrame(({ camera }) => {

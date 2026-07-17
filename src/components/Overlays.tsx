@@ -270,6 +270,8 @@ export function BookOverlay() {
   const [form, setForm] = useState<{ full_name: string; phone: string; email: string; service: string; zip: string }>({
     full_name: "", phone: "", email: "", service: site.booking.services[0], zip: "",
   });
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoErr, setPhotoErr] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -277,6 +279,15 @@ export function BookOverlay() {
   if (active !== "book") return null;
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhotoErr(null);
+    const f = e.target.files?.[0] ?? null;
+    if (!f) { setPhoto(null); return; }
+    if (!f.type.startsWith("image/")) { setPhotoErr("Please choose an image file."); return; }
+    if (f.size > 8 * 1024 * 1024) { setPhotoErr("Photo must be under 8 MB."); return; }
+    setPhoto(f);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -287,12 +298,30 @@ export function BookOverlay() {
     if (!/^\d{5}(-\d{4})?$/.test(form.zip.trim())) return setErr("Please enter a valid ZIP code.");
 
     setSubmitting(true);
+
+    // Optional photo upload — failure should not block booking
+    let photo_path: string | null = null;
+    if (photo) {
+      try {
+        const ext = (photo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("booking-photos")
+          .upload(path, photo, { contentType: photo.type, upsert: false });
+        if (upErr) throw upErr;
+        photo_path = path;
+      } catch (e) {
+        console.error("photo upload failed", e);
+      }
+    }
+
     const { error } = await supabase.from("bookings").insert({
       full_name: form.full_name.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
       service: form.service,
       zip: form.zip.trim(),
+      ...(photo_path ? { photo_path } : {}),
     });
     if (error) {
       setSubmitting(false);
@@ -301,12 +330,14 @@ export function BookOverlay() {
     }
     // Fire-and-forget email; ignore failure
     supabase.functions
-      .invoke("send-booking-email", { body: form })
+      .invoke("send-booking-email", { body: { ...form, photo_path } })
       .catch((e) => console.error("email invoke failed", e));
 
     setSubmitting(false);
     setSuccess(true);
   };
+
+
 
   return (
     <OverlayShell title="BOOK" onClose={() => { setSuccess(false); close(); }}>
@@ -348,7 +379,18 @@ export function BookOverlay() {
             <Field label="ZIP">
               <input value={form.zip} onChange={(e) => set("zip", e.target.value)} className={inputCls} autoComplete="postal-code" inputMode="numeric" required />
             </Field>
+            <Field label="Photo (optional)">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onPhotoChange}
+                className="block w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:tracking-[0.24em] file:uppercase file:font-semibold file:bg-white/5 file:text-[#F08A1D] hover:file:bg-white/10"
+              />
+              {photo && <p className="mt-2 text-xs text-neutral-500">{photo.name} · {(photo.size / (1024 * 1024)).toFixed(2)} MB</p>}
+              {photoErr && <p className="mt-2 text-xs text-red-400">{photoErr}</p>}
+            </Field>
             {err && <p className="text-sm text-red-400">{err}</p>}
+
             <button
               type="submit"
               disabled={submitting}
