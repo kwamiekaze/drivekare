@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ServicesMarquee } from "./ServicesMarquee";
 
-const SCRUB_MP4 = "/videos/garage-scrub-v2.mp4";
-const SCRUB_WEBM = "/videos/garage-scrub-v2.webm";
-const POSTER = "/videos/garage-scrub-poster-v2.jpg";
+const SCRUB_MP4 = "/videos/garage-scrub-v3.mp4";
+const SCRUB_WEBM = "/videos/garage-scrub-v3.webm";
+const POSTER = "/videos/garage-scrub-poster-v3.jpg";
 
 export function GarageScroll() {
   const sectionRef = useRef<HTMLElement | null>(null);
