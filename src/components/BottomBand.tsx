@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -106,14 +106,154 @@ export function BottomBand() {
 
   const sendAnother = () => setSuccess(false);
 
+  // Background atmosphere: mount hero video only when section is near viewport
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [mountBgVideo, setMountBgVideo] = useState(false);
+  const [bgVisible, setBgVisible] = useState(false);
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setMountBgVideo(true);
+            setBgVisible(true);
+          } else {
+            setBgVisible(false);
+          }
+        }
+      },
+      { rootMargin: "400px 0px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    const v = bgVideoRef.current;
+    if (!v) return;
+    if (bgVisible) {
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [bgVisible, mountBgVideo]);
+
   return (
     <section
       id="contact"
-      className="relative w-full py-24 px-5 md:px-8"
+      ref={sectionRef}
+      className="relative w-full py-24 px-5 md:px-8 overflow-hidden isolate"
       style={{ background: "#0A0A0B" }}
       aria-label="Request service"
     >
-      <div className="max-w-2xl mx-auto">
+      {/* Layer 1: Atmosphere video (very subtle) */}
+      {mountBgVideo && !prefersReducedMotion && (
+        <video
+          ref={bgVideoRef}
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          style={{
+            opacity: 0.1,
+            filter: "blur(8px) saturate(115%)",
+            zIndex: 0,
+            transform: "scale(1.06)",
+          }}
+          muted
+          loop
+          playsInline
+          preload="none"
+          aria-hidden
+        >
+          <source src="/videos/hero-bear-v1.webm" type="video/webm" />
+          <source src="/videos/hero-bear-v1.mp4" type="video/mp4" />
+        </video>
+      )}
+
+      {/* Layer 2: Dark scrim to guarantee AA contrast over busiest frame */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 1,
+          background:
+            "linear-gradient(180deg, rgba(10,10,11,0.82) 0%, rgba(10,10,11,0.72) 50%, rgba(10,10,11,0.9) 100%)",
+        }}
+      />
+
+      {/* Layer 3: Carbon-fiber weave */}
+      <div
+        aria-hidden
+        className="carbon absolute inset-0 pointer-events-none"
+        style={{ zIndex: 2, opacity: 0.04 }}
+      />
+
+      {/* Layer 4: Warm overhead spotlight from top edge */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 3,
+          background:
+            "radial-gradient(120% 60% at 50% -10%, rgba(255,180,120,0.09) 0%, rgba(255,180,120,0.03) 40%, transparent 65%)",
+        }}
+      />
+
+      {/* Layer 5: Ignition glow rising from bottom */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 3,
+          background:
+            "radial-gradient(80% 55% at 50% 110%, rgba(240,138,29,0.13) 0%, rgba(240,138,29,0.05) 45%, transparent 70%)",
+        }}
+      />
+
+      {/* Layer 6: Corner vignette for depth */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 3,
+          background:
+            "radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)",
+        }}
+      />
+
+      {/* Layer 7: Brushed-steel top divider with orange accent segment */}
+      <div
+        aria-hidden
+        className="absolute top-0 left-0 right-0 pointer-events-none"
+        style={{ zIndex: 4, height: 1 }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(180,184,190,0.35) 20%, rgba(220,224,230,0.55) 50%, rgba(180,184,190,0.35) 80%, transparent 100%)",
+          }}
+        />
+        <div
+          className="absolute top-0 h-px"
+          style={{
+            left: "42%",
+            width: "16%",
+            background:
+              "linear-gradient(90deg, transparent, #F08A1D 50%, transparent)",
+            boxShadow: "0 0 8px rgba(240,138,29,0.7)",
+          }}
+        />
+      </div>
+
+      <div className="relative max-w-2xl mx-auto" style={{ zIndex: 5 }}>
+
         <div className="text-center mb-10">
           <div
             className="text-[10px] md:text-[11px] tracking-[0.5em] uppercase mb-3"
