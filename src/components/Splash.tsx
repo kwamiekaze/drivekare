@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { site } from "../content/site";
 
 const KEY = "dk_splash_done_v1";
-const SPLASH_MP4 = "/videos/garage-splash-v1.mp4";
-const SPLASH_WEBM = "/videos/garage-splash-v1.webm";
-const SPLASH_POSTER = "/videos/garage-splash-poster-v1.jpg";
+const SPLASH_MP4 = "/videos/bear-splash-v1.mp4";
+const SPLASH_WEBM = "/videos/bear-splash-v1.webm";
+const SPLASH_POSTER = "/videos/bear-splash-poster-v1.jpg";
 
 export function Splash() {
   const [gone, setGone] = useState(true);
