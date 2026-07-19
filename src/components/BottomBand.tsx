@@ -226,14 +226,15 @@ export function BottomBand() {
           className="relative rounded-2xl p-6 md:p-10"
           style={{
             background:
-              "linear-gradient(180deg, rgba(24,24,27,0.85) 0%, rgba(14,14,16,0.9) 100%)",
-            backdropFilter: "blur(18px) saturate(140%)",
-            WebkitBackdropFilter: "blur(18px) saturate(140%)",
-            border: "1px solid rgba(240,138,29,0.18)",
+              "linear-gradient(180deg, rgba(12,12,14,0.94) 0%, rgba(8,8,10,0.96) 100%)",
+            backdropFilter: "blur(20px) saturate(140%)",
+            WebkitBackdropFilter: "blur(20px) saturate(140%)",
+            border: "1px solid rgba(240,138,29,0.20)",
             boxShadow:
-              "0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(240,138,29,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+              "0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,138,29,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
+
           {/* Glow border shine */}
           <div
             aria-hidden
