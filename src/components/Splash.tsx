@@ -55,7 +55,7 @@ export function Splash() {
   // Safety cap: never block longer than the clip duration + small buffer (~9s)
   useEffect(() => {
     if (gone) return;
-    const t = setTimeout(() => leave(), 9000);
+    const t = setTimeout(() => leave(), 6500);
     return () => clearTimeout(t);
   }, [gone, leave]);
 
