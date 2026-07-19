@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -106,45 +106,7 @@ export function BottomBand() {
 
   const sendAnother = () => setSuccess(false);
 
-  // Background atmosphere: mount hero video only when section is near viewport
   const sectionRef = useRef<HTMLElement | null>(null);
-  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
-  const [mountBgVideo, setMountBgVideo] = useState(false);
-  const [bgVisible, setBgVisible] = useState(false);
-  const prefersReducedMotion =
-    typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-    const el = sectionRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setMountBgVideo(true);
-            setBgVisible(true);
-          } else {
-            setBgVisible(false);
-          }
-        }
-      },
-      { rootMargin: "400px 0px", threshold: 0 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [prefersReducedMotion]);
-
-  useEffect(() => {
-    const v = bgVideoRef.current;
-    if (!v) return;
-    if (bgVisible) {
-      v.play().catch(() => {});
-    } else {
-      v.pause();
-    }
-  }, [bgVisible, mountBgVideo]);
 
   return (
     <section
@@ -154,80 +116,65 @@ export function BottomBand() {
       style={{ background: "#0A0A0B" }}
       aria-label="Request service"
     >
-      {/* Layer 1: Atmosphere video (very subtle) */}
-      {mountBgVideo && !prefersReducedMotion && (
-        <video
-          ref={bgVideoRef}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          style={{
-            opacity: 0.1,
-            filter: "blur(8px) saturate(115%)",
-            zIndex: 0,
-            transform: "scale(1.06)",
-          }}
-          muted
-          loop
-          playsInline
-          preload="none"
-          aria-hidden
-        >
-          <source src="/videos/hero-bear-v1.webm" type="video/webm" />
-          <source src="/videos/hero-bear-v1.mp4" type="video/mp4" />
-        </video>
-      )}
+      {/* Layer 1: DK monogram pattern background (with built-in top glow) */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 0,
+          backgroundColor: "#0A0A0B",
+          backgroundImage: "url('/brand/dk-pattern-bg.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
 
-      {/* Layer 2: Dark scrim to guarantee AA contrast over busiest frame */}
+      {/* Layer 2: Gentle scrim — lighter at top so the built-in orange glow lights the headline */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 1,
           background:
-            "linear-gradient(180deg, rgba(10,10,11,0.82) 0%, rgba(10,10,11,0.72) 50%, rgba(10,10,11,0.9) 100%)",
+            "linear-gradient(180deg, rgba(10,10,11,0.25) 0%, rgba(10,10,11,0.55) 45%, rgba(10,10,11,0.85) 100%)",
         }}
       />
 
-      {/* Layer 3: Carbon-fiber weave */}
+      {/* Layer 3: Subtle warm accent to reinforce the top-center glow behind the headline */}
       <div
         aria-hidden
-        className="carbon absolute inset-0 pointer-events-none"
-        style={{ zIndex: 2, opacity: 0.04 }}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 2,
+          background:
+            "radial-gradient(60% 35% at 50% 0%, rgba(240,138,29,0.18) 0%, rgba(240,138,29,0.06) 40%, transparent 70%)",
+        }}
       />
 
-      {/* Layer 4: Warm overhead spotlight from top edge */}
+      {/* Layer 4: Radial vignette behind/beneath the card area for text contrast */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 3,
           background:
-            "radial-gradient(120% 60% at 50% -10%, rgba(255,180,120,0.09) 0%, rgba(255,180,120,0.03) 40%, transparent 65%)",
+            "radial-gradient(70% 55% at 50% 65%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 50%, transparent 80%)",
         }}
       />
 
-      {/* Layer 5: Ignition glow rising from bottom */}
+      {/* Layer 5: Corner vignette for depth */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 3,
           background:
-            "radial-gradient(80% 55% at 50% 110%, rgba(240,138,29,0.13) 0%, rgba(240,138,29,0.05) 45%, transparent 70%)",
+            "radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.6) 100%)",
         }}
       />
 
-      {/* Layer 6: Corner vignette for depth */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          zIndex: 3,
-          background:
-            "radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)",
-        }}
-      />
-
-      {/* Layer 7: Brushed-steel top divider with orange accent segment */}
+      {/* Layer 6: Brushed-steel top divider with orange accent segment */}
       <div
         aria-hidden
         className="absolute top-0 left-0 right-0 pointer-events-none"
@@ -251,6 +198,7 @@ export function BottomBand() {
           }}
         />
       </div>
+
 
       <div className="relative max-w-2xl mx-auto" style={{ zIndex: 5 }}>
 
@@ -278,14 +226,15 @@ export function BottomBand() {
           className="relative rounded-2xl p-6 md:p-10"
           style={{
             background:
-              "linear-gradient(180deg, rgba(24,24,27,0.85) 0%, rgba(14,14,16,0.9) 100%)",
-            backdropFilter: "blur(18px) saturate(140%)",
-            WebkitBackdropFilter: "blur(18px) saturate(140%)",
-            border: "1px solid rgba(240,138,29,0.18)",
+              "linear-gradient(180deg, rgba(12,12,14,0.94) 0%, rgba(8,8,10,0.96) 100%)",
+            backdropFilter: "blur(20px) saturate(140%)",
+            WebkitBackdropFilter: "blur(20px) saturate(140%)",
+            border: "1px solid rgba(240,138,29,0.20)",
             boxShadow:
-              "0 30px 80px -20px rgba(0,0,0,0.7), 0 0 0 1px rgba(240,138,29,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
+              "0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,138,29,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
+
           {/* Glow border shine */}
           <div
             aria-hidden
