@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { site } from "../content/site";
 
 const KEY = "dk_splash_done_v1";
-const SPLASH_MP4 = "/videos/garage-splash-v1.mp4";
-const SPLASH_WEBM = "/videos/garage-splash-v1.webm";
-const SPLASH_POSTER = "/videos/garage-splash-poster-v1.jpg";
+const SPLASH_MP4 = "/videos/bear-splash-v1.mp4";
+const SPLASH_WEBM = "/videos/bear-splash-v1.webm";
+const SPLASH_POSTER = "/videos/bear-splash-poster-v1.jpg";
 
 export function Splash() {
   const [gone, setGone] = useState(true);
@@ -55,7 +55,7 @@ export function Splash() {
   // Safety cap: never block longer than the clip duration + small buffer (~9s)
   useEffect(() => {
     if (gone) return;
-    const t = setTimeout(() => leave(), 9000);
+    const t = setTimeout(() => leave(), 6500);
     return () => clearTimeout(t);
   }, [gone, leave]);
 
