@@ -11,11 +11,7 @@ const ACCEPT = "image/jpeg,image/png,image/webp,image/heic,image/heif";
 
 const schema = z.object({
   full_name: z.string().trim().min(1, "Required").max(120),
-  phone: z
-    .string()
-    .trim()
-    .min(7, "Enter a valid phone")
-    .max(30),
+  phone: z.string().trim().min(7, "Enter a valid phone").max(30),
   email: z.string().trim().email("Enter a valid email").max(255),
   city_zip: z.string().trim().min(1, "Required").max(120),
   message: z.string().trim().max(2000).optional().or(z.literal("")),
@@ -37,6 +33,7 @@ export function BottomBand() {
   const [success, setSuccess] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const camRef = useRef<HTMLInputElement | null>(null);
+  const pendingMessageId = useRef<string | null>(null);
 
   const pickFile = (f: File | null) => {
     setPhotoErr(null);
@@ -70,31 +67,55 @@ export function BottomBand() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      let photo_url: string | null = null;
-      if (photo) {
-        const ext = (photo.name.split(".").pop() || "jpg").toLowerCase();
-        const path = `${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("contact-photos")
-          .upload(path, photo, { contentType: photo.type || "image/jpeg" });
-        if (upErr) throw upErr;
-        photo_url = path;
+      let messageId = pendingMessageId.current;
+      if (!messageId) {
+        messageId = crypto.randomUUID();
+        let photo_url: string | null = null;
+        if (photo) {
+          const ext = (photo.name.split(".").pop() || "jpg").toLowerCase();
+          const path = `${messageId}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("contact-photos")
+            .upload(path, photo, { contentType: photo.type || "image/jpeg" });
+          if (upErr) throw upErr;
+          photo_url = path;
+        }
+
+        const { error } = await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .from("contact_messages" as any)
+          .insert({
+            id: messageId,
+            full_name: values.full_name,
+            phone: values.phone,
+            email: values.email,
+            city_zip: values.city_zip,
+            message: values.message || null,
+            photo_url,
+          });
+        if (error) throw error;
+        pendingMessageId.current = messageId;
       }
 
-      const { error } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from("contact_messages" as any)
-        .insert({
-          full_name: values.full_name,
-          phone: values.phone,
-          email: values.email,
-          city_zip: values.city_zip,
-          message: values.message || null,
-          photo_url,
+      let emailSent = false;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const { data, error: emailError } = await supabase.functions.invoke("send-booking-email", {
+          body: { contact_message_id: messageId },
         });
-      if (error) throw error;
+        if (!emailError && data?.sent === true) {
+          emailSent = true;
+          break;
+        }
+        console.error("contact notification email attempt failed", emailError ?? data);
+      }
+      if (!emailSent) {
+        throw new Error(
+          "Your request was saved, but the notification email could not be sent. Please try again.",
+        );
+      }
 
       toast.success("Message sent — we'll be in touch shortly.");
+      pendingMessageId.current = null;
       setSuccess(true);
       reset();
       removePhoto();
@@ -192,16 +213,13 @@ export function BottomBand() {
           style={{
             left: "42%",
             width: "16%",
-            background:
-              "linear-gradient(90deg, transparent, #F08A1D 50%, transparent)",
+            background: "linear-gradient(90deg, transparent, #F08A1D 50%, transparent)",
             boxShadow: "0 0 8px rgba(240,138,29,0.7)",
           }}
         />
       </div>
 
-
       <div className="relative max-w-2xl mx-auto" style={{ zIndex: 5 }}>
-
         <div className="text-center mb-10">
           <div
             className="text-[10px] md:text-[11px] tracking-[0.5em] uppercase mb-3"
@@ -212,7 +230,7 @@ export function BottomBand() {
           <h2
             className="steel-hot uppercase"
             style={{
-              fontFamily: 'var(--font-display)',
+              fontFamily: "var(--font-display)",
               fontSize: "clamp(2rem, 6vw, 3.75rem)",
               letterSpacing: "0.01em",
               lineHeight: 1,
@@ -225,8 +243,7 @@ export function BottomBand() {
         <div
           className="relative rounded-2xl p-6 md:p-10"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(12,12,14,0.94) 0%, rgba(8,8,10,0.96) 100%)",
+            background: "linear-gradient(180deg, rgba(12,12,14,0.94) 0%, rgba(8,8,10,0.96) 100%)",
             backdropFilter: "blur(20px) saturate(140%)",
             WebkitBackdropFilter: "blur(20px) saturate(140%)",
             border: "1px solid rgba(240,138,29,0.20)",
@@ -234,7 +251,6 @@ export function BottomBand() {
               "0 30px 80px -20px rgba(0,0,0,0.8), 0 0 0 1px rgba(240,138,29,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
-
           {/* Glow border shine */}
           <div
             aria-hidden
@@ -250,8 +266,7 @@ export function BottomBand() {
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #F08A1D 0%, #FFA940 100%)",
+                  background: "linear-gradient(135deg, #F08A1D 0%, #FFA940 100%)",
                   boxShadow: "0 0 40px rgba(240,138,29,0.4)",
                 }}
               >
@@ -260,7 +275,7 @@ export function BottomBand() {
               <h3
                 className="uppercase font-black text-white mb-2"
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: "var(--font-display)",
                   fontSize: "clamp(1.5rem, 4vw, 2rem)",
                   letterSpacing: "0.02em",
                 }}
@@ -268,8 +283,8 @@ export function BottomBand() {
                 Message Sent!
               </h3>
               <p className="text-neutral-400 mb-8 max-w-sm">
-                Thanks for reaching out — a DriveKare tech will get back to you
-                shortly with next steps.
+                Thanks for reaching out — a DriveKare tech will get back to you shortly with next
+                steps.
               </p>
               <button
                 type="button"
@@ -293,11 +308,7 @@ export function BottomBand() {
                   className={inputCls}
                 />
               </Field>
-              <Field
-                label="Phone Number"
-                required
-                error={errors.phone?.message}
-              >
+              <Field label="Phone Number" required error={errors.phone?.message}>
                 <input
                   type="tel"
                   inputMode="tel"
@@ -315,11 +326,7 @@ export function BottomBand() {
                   className={inputCls}
                 />
               </Field>
-              <Field
-                label="City / Zipcode"
-                required
-                error={errors.city_zip?.message}
-              >
+              <Field label="City / Zipcode" required error={errors.city_zip?.message}>
                 <input
                   type="text"
                   autoComplete="postal-code"
@@ -327,10 +334,7 @@ export function BottomBand() {
                   className={inputCls}
                 />
               </Field>
-              <Field
-                label="Requested service or details of issue"
-                error={errors.message?.message}
-              >
+              <Field label="Requested service or details of issue" error={errors.message?.message}>
                 <textarea
                   rows={4}
                   {...register("message")}
@@ -342,9 +346,7 @@ export function BottomBand() {
               <div>
                 <label className="block text-xs uppercase tracking-[0.2em] text-neutral-300 mb-2">
                   Attach or take a photo{" "}
-                  <span className="text-neutral-500 normal-case tracking-normal">
-                    (optional)
-                  </span>
+                  <span className="text-neutral-500 normal-case tracking-normal">(optional)</span>
                 </label>
                 <div className="flex gap-3 flex-wrap">
                   <button
@@ -379,9 +381,7 @@ export function BottomBand() {
                     onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
                   />
                 </div>
-                {photoErr && (
-                  <p className="mt-2 text-xs text-red-400">{photoErr}</p>
-                )}
+                {photoErr && <p className="mt-2 text-xs text-red-400">{photoErr}</p>}
                 {photoPreview && (
                   <div className="mt-3 inline-flex items-start relative">
                     <img
@@ -407,11 +407,10 @@ export function BottomBand() {
                 disabled={isSubmitting}
                 className="mt-3 w-full h-14 rounded-xl uppercase font-black tracking-widest text-black inline-flex items-center justify-center gap-2 disabled:opacity-70 transition-transform active:scale-[0.99]"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #F08A1D 0%, #FFA940 100%)",
+                  background: "linear-gradient(135deg, #F08A1D 0%, #FFA940 100%)",
                   boxShadow:
                     "0 10px 30px -8px rgba(240,138,29,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
-                  fontFamily: 'var(--font-display)',
+                  fontFamily: "var(--font-display)",
                   fontSize: "1rem",
                   letterSpacing: "0.14em",
                 }}

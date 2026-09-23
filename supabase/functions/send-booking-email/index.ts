@@ -22,6 +22,11 @@ type Booking = {
   photo_path?: string | null;
 };
 
+type RequestPayload = Booking & {
+  booking_id?: string;
+  contact_message_id?: string;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") {
@@ -29,10 +34,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const payload = (await req.json()) as Booking & { booking_id?: string };
+    const payload = (await req.json()) as RequestPayload;
     let booking: Booking = payload;
+    let photoBucket = "booking-photos";
+    let idempotencyKey = booking.id ? `booking-notification/${booking.id}` : null;
 
-    if (payload.booking_id) {
+    if (payload.booking_id || payload.contact_message_id) {
       const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
       const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (!SUPABASE_URL || !SERVICE_ROLE) {
@@ -41,17 +48,40 @@ Deno.serve(async (req) => {
       }
 
       const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
-      const { data, error } = await admin
-        .from("bookings")
-        .select("id, full_name, phone, email, service, zip, photo_path")
-        .eq("id", payload.booking_id)
-        .single();
-
-      if (error || !data) {
-        console.error("Booking lookup failed", error);
-        return json({ sent: false, reason: "booking_not_found" }, 404);
+      if (payload.contact_message_id) {
+        const { data, error } = await admin
+          .from("contact_messages")
+          .select("id, full_name, phone, email, city_zip, message, photo_url")
+          .eq("id", payload.contact_message_id)
+          .single();
+        if (error || !data) {
+          console.error("Contact message lookup failed", error);
+          return json({ sent: false, reason: "request_not_found" }, 404);
+        }
+        booking = {
+          id: data.id,
+          full_name: data.full_name,
+          phone: data.phone,
+          email: data.email,
+          service: data.message?.trim() || "General service request",
+          zip: data.city_zip,
+          photo_path: data.photo_url,
+        };
+        photoBucket = "contact-photos";
+        idempotencyKey = `contact-message-notification/${data.id}`;
+      } else {
+        const { data, error } = await admin
+          .from("bookings")
+          .select("id, full_name, phone, email, service, zip, photo_path")
+          .eq("id", payload.booking_id)
+          .single();
+        if (error || !data) {
+          console.error("Booking lookup failed", error);
+          return json({ sent: false, reason: "request_not_found" }, 404);
+        }
+        booking = data;
+        idempotencyKey = `booking-notification/${data.id}`;
       }
-      booking = data;
     }
 
     const { full_name, phone, email, service, zip, photo_path } = booking;
@@ -87,7 +117,7 @@ Deno.serve(async (req) => {
         try {
           const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
           const { data: blob, error: dlErr } = await admin.storage
-            .from("booking-photos")
+            .from(photoBucket)
             .download(photo_path);
           if (dlErr) throw dlErr;
           const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -97,7 +127,7 @@ Deno.serve(async (req) => {
             attachments = [{ filename: photoFilename, content: btoa(bin) }];
           } else {
             const { data: signed } = await admin.storage
-              .from("booking-photos")
+              .from(photoBucket)
               .createSignedUrl(photo_path, 60 * 60 * 24 * 7);
             signedUrl = signed?.signedUrl ?? null;
           }
@@ -106,7 +136,7 @@ Deno.serve(async (req) => {
           try {
             const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
             const { data: signed } = await admin.storage
-              .from("booking-photos")
+              .from(photoBucket)
               .createSignedUrl(photo_path, 60 * 60 * 24 * 7);
             signedUrl = signed?.signedUrl ?? null;
           } catch (signedUrlError) {
@@ -144,7 +174,7 @@ Deno.serve(async (req) => {
       Authorization: `Bearer ${RESEND_API_KEY}`,
       "Content-Type": "application/json",
     };
-    if (booking.id) resendHeaders["Idempotency-Key"] = `booking-notification/${booking.id}`;
+    if (idempotencyKey) resendHeaders["Idempotency-Key"] = idempotencyKey;
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
