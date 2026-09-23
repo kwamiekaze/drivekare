@@ -1,5 +1,5 @@
-// Sends booking notification email to DriveKare owners via Resend.
-// Failures are logged; caller ignores failure so the UI still confirms.
+// Sends booking notification email to both DriveKare owners via Resend.
+// The booking is read from the database instead of trusting browser-supplied details.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -12,6 +12,16 @@ const CORS = {
 const RECIPIENTS = ["kwamiekaze@gmail.com", "drivekarellc@gmail.com"];
 const ATTACHMENT_MAX_BYTES = 6 * 1024 * 1024; // ~6 MB inline cap
 
+type Booking = {
+  id?: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  service: string;
+  zip: string;
+  photo_path?: string | null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
   if (req.method !== "POST") {
@@ -19,26 +29,49 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const {
-      full_name,
-      phone,
-      email,
-      service,
-      zip,
-      photo_path,
-    }: {
-      full_name: string;
-      phone: string;
-      email: string;
-      service: string;
-      zip: string;
-      photo_path?: string | null;
-    } = await req.json();
+    const payload = (await req.json()) as Booking & { booking_id?: string };
+    let booking: Booking = payload;
+
+    if (payload.booking_id) {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+      const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (!SUPABASE_URL || !SERVICE_ROLE) {
+        console.error("Supabase server credentials are unavailable");
+        return json({ sent: false, reason: "server_configuration" }, 500);
+      }
+
+      const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+      const { data, error } = await admin
+        .from("bookings")
+        .select("id, full_name, phone, email, service, zip, photo_path")
+        .eq("id", payload.booking_id)
+        .single();
+
+      if (error || !data) {
+        console.error("Booking lookup failed", error);
+        return json({ sent: false, reason: "booking_not_found" }, 404);
+      }
+      booking = data;
+    }
+
+    const { full_name, phone, email, service, zip, photo_path } = booking;
+    if (
+      ![full_name, phone, email, service, zip].every(
+        (value) => typeof value === "string" && value.trim(),
+      )
+    ) {
+      return json({ sent: false, reason: "invalid_booking" }, 400);
+    }
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
-      console.error("RESEND_API_KEY not configured — skipping email send");
-      return json({ sent: false, reason: "no_api_key" });
+      console.error("RESEND_API_KEY not configured");
+      return json({ sent: false, reason: "no_api_key" }, 500);
+    }
+    const from = Deno.env.get("BOOKING_FROM_EMAIL");
+    if (!from) {
+      console.error("BOOKING_FROM_EMAIL not configured");
+      return json({ sent: false, reason: "no_sender" }, 500);
     }
 
     // Prepare optional attachment / signed URL
@@ -76,7 +109,9 @@ Deno.serve(async (req) => {
               .from("booking-photos")
               .createSignedUrl(photo_path, 60 * 60 * 24 * 7);
             signedUrl = signed?.signedUrl ?? null;
-          } catch {}
+          } catch (signedUrlError) {
+            console.error("photo signed URL fallback failed", signedUrlError);
+          }
         }
       }
     }
@@ -86,8 +121,8 @@ Deno.serve(async (req) => {
           attachments
             ? `Attached (${escape(photoFilename ?? "photo")})`
             : signedUrl
-            ? `<a href="${escape(signedUrl)}" style="color:#FFA940">Download photo</a> (valid 7 days)`
-            : "Uploaded (link unavailable)"
+              ? `<a href="${escape(signedUrl)}" style="color:#FFA940">Download photo</a> (valid 7 days)`
+              : "Uploaded (link unavailable)"
         }</td></tr>`
       : "";
 
@@ -105,14 +140,17 @@ Deno.serve(async (req) => {
         <p style="color:#6E7278;font-size:12px;margin-top:32px">DriveKare — Care that comes to you.</p>
       </div>`;
 
+    const resendHeaders: Record<string, string> = {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    };
+    if (booking.id) resendHeaders["Idempotency-Key"] = `booking-notification/${booking.id}`;
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: resendHeaders,
       body: JSON.stringify({
-        from: "DriveKare <onboarding@resend.dev>",
+        from,
         to: RECIPIENTS,
         subject: `New DriveKare Booking — ${full_name} — ${service}`,
         html,
@@ -124,19 +162,19 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       const err = await res.text();
       console.error(`Resend failed [${res.status}]: ${err}`);
-      return json({ sent: false, reason: "provider_error", status: res.status });
+      return json({ sent: false, reason: "provider_error", status: res.status }, 502);
     }
 
     return json({ sent: true, recipients: RECIPIENTS });
   } catch (e) {
     console.error("send-booking-email error", e);
-    return json({ sent: false, reason: "exception" });
+    return json({ sent: false, reason: "exception" }, 500);
   }
 });
 
-function json(body: unknown) {
+function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
-    status: 200,
+    status,
     headers: { ...CORS, "content-type": "application/json" },
   });
 }

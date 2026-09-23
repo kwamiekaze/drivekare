@@ -56,7 +56,10 @@ export function MenuOverlay() {
   const { user, role, signOut } = useAuth();
   if (active !== "menu") return null;
 
-  const items: Array<{ key: "services" | "about" | "book" | "contact" | "signin" | "admin"; label: string }> = [
+  const items: Array<{
+    key: "services" | "about" | "book" | "contact" | "signin" | "admin";
+    label: string;
+  }> = [
     { key: "services", label: "SERVICES" },
     { key: "about", label: "ABOUT" },
     { key: "book", label: "BOOK" },
@@ -69,11 +72,7 @@ export function MenuOverlay() {
     <OverlayShell title="MENU" onClose={close}>
       <ul className="space-y-2 md:space-y-4">
         {items.map((it, i) => (
-          <li
-            key={it.key}
-            className="dk-menu-item"
-            style={{ animationDelay: `${i * 60}ms` }}
-          >
+          <li key={it.key} className="dk-menu-item" style={{ animationDelay: `${i * 60}ms` }}>
             <button
               onClick={() => open(it.key)}
               className="font-display uppercase tracking-tight text-[14vw] md:text-[9vw] leading-[0.9] steel hover:text-[#F08A1D] transition-colors block text-left w-full"
@@ -123,7 +122,9 @@ export function ServicesOverlay() {
           >
             <div className="flex items-baseline justify-between mb-4">
               <h3 className="font-display uppercase text-lg tracking-wide text-white">{s.name}</h3>
-              <span className="text-[10px] uppercase tracking-[0.24em] text-[#F08A1D]">{s.from}</span>
+              <span className="text-[10px] uppercase tracking-[0.24em] text-[#F08A1D]">
+                {s.from}
+              </span>
             </div>
             <ul className="space-y-2 text-sm text-neutral-400">
               {s.bullets.map((b) => (
@@ -167,7 +168,12 @@ function CountUp({ value, suffix }: { value: number; suffix: string }) {
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
   }, [value]);
-  return <span ref={ref}>{n.toLocaleString()}{suffix}</span>;
+  return (
+    <span ref={ref}>
+      {n.toLocaleString()}
+      {suffix}
+    </span>
+  );
 }
 
 export function AboutOverlay() {
@@ -187,15 +193,21 @@ export function AboutOverlay() {
             <div className="font-display text-3xl md:text-5xl text-white">
               <CountUp value={s.value} suffix={s.suffix} />
             </div>
-            <div className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mt-2">{s.label}</div>
+            <div className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mt-2">
+              {s.label}
+            </div>
           </div>
         ))}
       </div>
-      <h3 className="font-display uppercase text-3xl md:text-4xl steel mb-8">{site.testimonials.title}</h3>
+      <h3 className="font-display uppercase text-3xl md:text-4xl steel mb-8">
+        {site.testimonials.title}
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {site.testimonials.items.map((t) => (
           <blockquote key={t.author} className="chrome-border rounded-2xl p-6">
-            <p className="text-sm md:text-base text-neutral-200 leading-relaxed mb-4">"{t.quote}"</p>
+            <p className="text-sm md:text-base text-neutral-200 leading-relaxed mb-4">
+              "{t.quote}"
+            </p>
             <footer className="text-[10px] uppercase tracking-[0.24em] text-neutral-500">
               {t.author} · {t.role}
             </footer>
@@ -221,15 +233,35 @@ export function ContactOverlay() {
           <p className="text-neutral-300 mb-10 max-w-md">{site.contact.copy}</p>
           <dl className="space-y-6 text-lg">
             <div>
-              <dt className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-1">Phone</dt>
-              <dd><a href={`tel:${site.phone}`} className="text-white hover:text-[#F08A1D] transition-colors">{site.phone}</a></dd>
+              <dt className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-1">
+                Phone
+              </dt>
+              <dd>
+                <a
+                  href={`tel:${site.phone}`}
+                  className="text-white hover:text-[#F08A1D] transition-colors"
+                >
+                  {site.phone}
+                </a>
+              </dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-1">Email</dt>
-              <dd><a href={`mailto:${site.email}`} className="text-white hover:text-[#F08A1D] transition-colors">{site.email}</a></dd>
+              <dt className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-1">
+                Email
+              </dt>
+              <dd>
+                <a
+                  href={`mailto:${site.email}`}
+                  className="text-white hover:text-[#F08A1D] transition-colors"
+                >
+                  {site.email}
+                </a>
+              </dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-1">Service Area</dt>
+              <dt className="text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-1">
+                Service Area
+              </dt>
               <dd className="text-white">{site.area.copy}</dd>
             </div>
           </dl>
@@ -251,7 +283,14 @@ export function ContactOverlay() {
               className="relative w-16 h-16 rounded-full flex items-center justify-center"
               style={{ background: "linear-gradient(180deg,#FFA940,#F08A1D)" }}
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A0A0B" strokeWidth="2.5">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#0A0A0B"
+                strokeWidth="2.5"
+              >
                 <path d="M12 22s-8-7-8-13a8 8 0 0116 0c0 6-8 13-8 13z" />
                 <circle cx="12" cy="9" r="3" />
               </svg>
@@ -267,80 +306,141 @@ export function ContactOverlay() {
 
 export function BookOverlay() {
   const { active, close } = useOverlay();
-  const [form, setForm] = useState<{ full_name: string; phone: string; email: string; service: string; zip: string }>({
-    full_name: "", phone: "", email: "", service: site.booking.services[0], zip: "",
+  const [form, setForm] = useState<{
+    full_name: string;
+    phone: string;
+    email: string;
+    service: string;
+    zip: string;
+  }>({
+    full_name: "",
+    phone: "",
+    email: "",
+    service: site.booking.services[0],
+    zip: "",
   });
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoErr, setPhotoErr] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const pendingBookingId = useRef<string | null>(null);
 
   if (active !== "book") return null;
 
-  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
+    setForm((f) => ({ ...f, [k]: v }));
 
   const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPhotoErr(null);
     const f = e.target.files?.[0] ?? null;
-    if (!f) { setPhoto(null); return; }
-    if (!f.type.startsWith("image/")) { setPhotoErr("Please choose an image file."); return; }
-    if (f.size > 8 * 1024 * 1024) { setPhotoErr("Photo must be under 8 MB."); return; }
+    if (!f) {
+      setPhoto(null);
+      return;
+    }
+    if (!f.type.startsWith("image/")) {
+      setPhotoErr("Please choose an image file.");
+      return;
+    }
+    if (f.size > 8 * 1024 * 1024) {
+      setPhotoErr("Photo must be under 8 MB.");
+      return;
+    }
     setPhoto(f);
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
-    if (!form.full_name.trim() || form.full_name.length < 2) return setErr("Please enter your full name.");
+    if (!form.full_name.trim() || form.full_name.length < 2)
+      return setErr("Please enter your full name.");
     if (!/^[+()\d\s-]{7,}$/.test(form.phone)) return setErr("Please enter a valid phone number.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return setErr("Please enter a valid email.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      return setErr("Please enter a valid email.");
     if (!/^\d{5}(-\d{4})?$/.test(form.zip.trim())) return setErr("Please enter a valid ZIP code.");
 
     setSubmitting(true);
 
-    // Optional photo upload — failure should not block booking
+    let bookingId = pendingBookingId.current;
+
+    // A retry after an email outage reuses the saved booking instead of creating
+    // a duplicate database row or uploading the same photo again.
     let photo_path: string | null = null;
-    if (photo) {
-      try {
-        const ext = (photo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("booking-photos")
-          .upload(path, photo, { contentType: photo.type, upsert: false });
-        if (upErr) throw upErr;
-        photo_path = path;
-      } catch (e) {
-        console.error("photo upload failed", e);
+    if (!bookingId) {
+      // Optional photo upload — failure should not block booking
+      if (photo) {
+        try {
+          const ext =
+            (photo.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+          const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("booking-photos")
+            .upload(path, photo, { contentType: photo.type, upsert: false });
+          if (upErr) throw upErr;
+          photo_path = path;
+        } catch (e) {
+          console.error("photo upload failed", e);
+        }
       }
+
+      // Generate the ID in the browser so we can notify the email function without
+      // needing SELECT access to the otherwise private bookings table.
+      bookingId = crypto.randomUUID();
+      const { error } = await supabase.from("bookings").insert({
+        id: bookingId,
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        service: form.service,
+        zip: form.zip.trim(),
+        ...(photo_path ? { photo_path } : {}),
+      });
+      if (error) {
+        setSubmitting(false);
+        setErr(error.message);
+        return;
+      }
+      pendingBookingId.current = bookingId;
     }
 
-    const { error } = await supabase.from("bookings").insert({
-      full_name: form.full_name.trim(),
-      phone: form.phone.trim(),
-      email: form.email.trim(),
-      service: form.service,
-      zip: form.zip.trim(),
-      ...(photo_path ? { photo_path } : {}),
-    });
-    if (error) {
+    // Wait for delivery acceptance and retry transient failures. The booking ID
+    // is also used as Resend's idempotency key, so a retry cannot send duplicates.
+    let notificationSent = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data, error: emailError } = await supabase.functions.invoke("send-booking-email", {
+        // Keep the form fields during the deployment transition so this remains
+        // compatible with the previous function version.
+        body: { booking_id: bookingId, ...form, photo_path },
+      });
+      if (!emailError && data?.sent === true) {
+        notificationSent = true;
+        break;
+      }
+      console.error("booking email attempt failed", emailError ?? data);
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 700 * 2 ** attempt));
+    }
+
+    if (!notificationSent) {
       setSubmitting(false);
-      setErr(error.message);
+      setErr(
+        "Your booking was saved, but the notification email could not be sent. Please try again in a moment.",
+      );
       return;
     }
-    // Fire-and-forget email; ignore failure
-    supabase.functions
-      .invoke("send-booking-email", { body: { ...form, photo_path } })
-      .catch((e) => console.error("email invoke failed", e));
 
+    pendingBookingId.current = null;
     setSubmitting(false);
     setSuccess(true);
   };
 
-
-
   return (
-    <OverlayShell title="BOOK" onClose={() => { setSuccess(false); close(); }}>
+    <OverlayShell
+      title="BOOK"
+      onClose={() => {
+        setSuccess(false);
+        close();
+      }}
+    >
       {success ? (
         <div className="relative py-16 text-center">
           <Confetti />
@@ -349,7 +449,10 @@ export function BookOverlay() {
           </h2>
           <p className="text-neutral-300 max-w-md mx-auto mb-10">{site.booking.successCopy}</p>
           <button
-            onClick={() => { setSuccess(false); close(); }}
+            onClick={() => {
+              setSuccess(false);
+              close();
+            }}
             className="inline-flex items-center gap-3 px-7 py-4 text-[11px] tracking-[0.32em] uppercase font-semibold text-black rounded-full ignition-glow"
             style={{ background: "linear-gradient(180deg,#FFA940,#F08A1D)" }}
           >
@@ -363,21 +466,57 @@ export function BookOverlay() {
           </h2>
           <form onSubmit={submit} className="max-w-xl space-y-5">
             <Field label="Full Name">
-              <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} className={inputCls} autoComplete="name" required />
+              <input
+                value={form.full_name}
+                onChange={(e) => set("full_name", e.target.value)}
+                className={inputCls}
+                autoComplete="name"
+                required
+              />
             </Field>
             <Field label="Phone Number">
-              <input value={form.phone} onChange={(e) => set("phone", e.target.value)} className={inputCls} autoComplete="tel" inputMode="tel" required />
+              <input
+                value={form.phone}
+                onChange={(e) => set("phone", e.target.value)}
+                className={inputCls}
+                autoComplete="tel"
+                inputMode="tel"
+                required
+              />
             </Field>
             <Field label="Email">
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className={inputCls} autoComplete="email" required />
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => set("email", e.target.value)}
+                className={inputCls}
+                autoComplete="email"
+                required
+              />
             </Field>
             <Field label="Service Requested">
-              <select value={form.service} onChange={(e) => set("service", e.target.value)} className={inputCls} required>
-                {site.booking.services.map((s) => <option key={s} value={s}>{s}</option>)}
+              <select
+                value={form.service}
+                onChange={(e) => set("service", e.target.value)}
+                className={inputCls}
+                required
+              >
+                {site.booking.services.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="ZIP">
-              <input value={form.zip} onChange={(e) => set("zip", e.target.value)} className={inputCls} autoComplete="postal-code" inputMode="numeric" required />
+              <input
+                value={form.zip}
+                onChange={(e) => set("zip", e.target.value)}
+                className={inputCls}
+                autoComplete="postal-code"
+                inputMode="numeric"
+                required
+              />
             </Field>
             <Field label="Photo (optional)">
               <input
@@ -386,7 +525,11 @@ export function BookOverlay() {
                 onChange={onPhotoChange}
                 className="block w-full text-sm text-neutral-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:tracking-[0.24em] file:uppercase file:font-semibold file:bg-white/5 file:text-[#F08A1D] hover:file:bg-white/10"
               />
-              {photo && <p className="mt-2 text-xs text-neutral-500">{photo.name} · {(photo.size / (1024 * 1024)).toFixed(2)} MB</p>}
+              {photo && (
+                <p className="mt-2 text-xs text-neutral-500">
+                  {photo.name} · {(photo.size / (1024 * 1024)).toFixed(2)} MB
+                </p>
+              )}
               {photoErr && <p className="mt-2 text-xs text-red-400">{photoErr}</p>}
             </Field>
             {err && <p className="text-sm text-red-400">{err}</p>}
@@ -412,7 +555,9 @@ const inputCls =
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-2">{label}</span>
+      <span className="block text-[10px] uppercase tracking-[0.24em] text-neutral-500 mb-2">
+        {label}
+      </span>
       {children}
     </label>
   );
@@ -487,7 +632,10 @@ export function SignInOverlay() {
           {(["in", "up"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => { setMode(m); setErr(null); }}
+              onClick={() => {
+                setMode(m);
+                setErr(null);
+              }}
               className={`flex-1 py-2 text-[10px] uppercase tracking-[0.24em] rounded-full transition-colors ${
                 mode === m ? "bg-white/10 text-white" : "text-neutral-500 hover:text-white"
               }`}
@@ -499,14 +647,35 @@ export function SignInOverlay() {
         <form onSubmit={submit} className="space-y-4">
           {mode === "up" && (
             <Field label="Full Name">
-              <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} autoComplete="name" required />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inputCls}
+                autoComplete="name"
+                required
+              />
             </Field>
           )}
           <Field label="Email">
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} autoComplete="email" required />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputCls}
+              autoComplete="email"
+              required
+            />
           </Field>
           <Field label="Password">
-            <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} className={inputCls} autoComplete={mode === "in" ? "current-password" : "new-password"} required minLength={6} />
+            <input
+              type="password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              className={inputCls}
+              autoComplete={mode === "in" ? "current-password" : "new-password"}
+              required
+              minLength={6}
+            />
           </Field>
           {err && <p className="text-sm text-red-400">{err}</p>}
           <button
@@ -553,11 +722,13 @@ export function AdminOverlay() {
           email: p.email,
           full_name: p.full_name,
           role: roleMap.get(p.id) ?? "customer",
-        }))
+        })),
       );
       setLoading(false);
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [active, role]);
 
   if (active !== "admin") return null;
@@ -571,7 +742,11 @@ export function AdminOverlay() {
 
   const setUserRole = async (userId: string, newRole: "customer" | "karebear") => {
     // Remove non-admin roles then insert new
-    await supabase.from("user_roles").delete().eq("user_id", userId).in("role", ["customer", "karebear"]);
+    await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .in("role", ["customer", "karebear"]);
     const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole });
     if (error) return alert(error.message);
     setRows((rs) => rs.map((r) => (r.id === userId ? { ...r, role: newRole } : r)));
@@ -607,8 +782,8 @@ export function AdminOverlay() {
                           isAdmin
                             ? "bg-[#F08A1D]/20 text-[#F08A1D]"
                             : r.role === "karebear"
-                            ? "bg-white/10 text-white"
-                            : "bg-white/[0.03] text-neutral-400"
+                              ? "bg-white/10 text-white"
+                              : "bg-white/[0.03] text-neutral-400"
                         }`}
                       >
                         {r.role}
@@ -616,7 +791,9 @@ export function AdminOverlay() {
                     </td>
                     <td className="p-4 text-right">
                       {isAdmin ? (
-                        <span className="text-[10px] uppercase tracking-[0.24em] text-neutral-600">Locked</span>
+                        <span className="text-[10px] uppercase tracking-[0.24em] text-neutral-600">
+                          Locked
+                        </span>
                       ) : (
                         <div className="inline-flex gap-2">
                           <button

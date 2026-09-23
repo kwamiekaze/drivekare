@@ -2,10 +2,32 @@
 
 Build "DRIVEKARE" (drivekare.com) — a luxury MOBILE auto care company site engineered to win Awwwards/FWA for motion design and interactivity. Slogan everywhere it belongs: "AUTO CARE ANYWHERE." Dark, cinematic, obsessively polished — this must feel like a high-end automotive brand film (think Porsche configurator meets a fragrance ad), not a mechanic's site. DriveKare comes TO the customer: mobile detailing, oil changes, diagnostics, tire & battery service, full auto care at your driveway or office. The entire site's job: wow, then convert to a booking.
 
+## Booking email setup
+
+Every successful booking is emailed to both `drivekarellc@gmail.com` and
+`kwamiekaze@gmail.com` by the `send-booking-email` Supabase Edge Function.
+
+Production requires these Supabase Edge Function secrets:
+
+- `RESEND_API_KEY`: an API key from Resend.
+- `BOOKING_FROM_EMAIL`: a sender on a domain verified in Resend, for example
+  `DriveKare <bookings@drivekare.com>`.
+
+After changing the function, deploy it with:
+
+```sh
+supabase functions deploy send-booking-email --project-ref zyyrlamgjltcgfewvhwq
+```
+
+The booking form waits for Resend to accept the message, retries transient
+failures three times, and uses the booking ID as an idempotency key to avoid
+duplicate notification emails.
+
 CRITICAL ARCHITECTURE RULE — EDITABLE EVERYTHING:
 Create src/content/site.ts as the single source of truth for ALL text (headlines, taglines, services, stats, process steps, testimonials, footer, meta, phone/booking copy) AND a media config object with named slots: { heroVideo, revealVideo, roadVideo, heroModel } each with { src, poster, fallback }. Zero copy hardcoded in components. Real video srcs and the 3D model URL arrive in follow-up messages — until then every video slot uses a procedural fallback: a requestAnimationFrame canvas effect of streaking headlight/taillight light-trails and drifting chrome reflections on black asphalt (long horizontal cyan-white and orange streaks with motion blur feel), so every section looks stunning from day one. All videos, when wired, must be muted, playsinline, loop — every background film loops seamlessly. No text ever baked into media.
 
 ART DIRECTION (derived from the DK emblem — brushed gunmetal steel + ignition orange on black):
+
 - Palette: obsidian black (#0A0A0B) base, brushed-steel silver (chrome gradients: #E8E8EC → #9BA0A8 → #5B6068) for primary display treatment, ignition orange (#F08A1D, hover/glow variant #FFA940) as THE accent, glacial white body text. Subtle metallic sheen gradients on headings — headlines should look machined from brushed aluminum with an orange edge-light.
 - Typography: massive condensed uppercase display (Anton or Archivo Black) for headlines with huge scale contrast — headlines nearly touch viewport edges; Inter for body.
 - Signature texture: fine carbon-fiber weave at ~3% opacity on section backgrounds, orange scanline/edge-glow details on interactive elements.
