@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "sdk_version": "3.0.4",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://zyyrlamgjltcgfewvhwq.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "drivekare-polish",
+      "version": "0.1.0",
+      "title": "DriveKare Polish"
+    },
+    "tools": [
+      {
+        "name": "create_booking",
+        "title": "Create booking",
+        "description": "Submit a new mobile auto care service booking request.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "full_name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "maxLength": 255
+            },
+            "phone": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 40
+            },
+            "service": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "description": "Requested service, e.g. Mobile Detailing."
+            },
+            "zip": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 12
+            }
+          },
+          "required": [
+            "full_name",
+            "email",
+            "phone",
+            "service",
+            "zip"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_bookings",
+        "title": "List bookings",
+        "description": "List recent service bookings (visible to DriveKare staff accounts only).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Max rows to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_contact_messages",
+        "title": "List contact messages",
+        "description": "List recent messages sent through the contact form (visible to DriveKare staff accounts only).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Max rows to return."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
