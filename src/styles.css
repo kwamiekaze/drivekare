@@ -180,3 +180,15 @@ html { scroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* /nuhome garage: bay panel settles in when the bay changes */
+.nu-panel {
+  animation: nu-panel-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes nu-panel-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nu-panel { animation: none; }
+}

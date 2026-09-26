@@ -326,6 +326,19 @@ export function BookOverlay() {
   const [success, setSuccess] = useState(false);
   const pendingBookingId = useRef<string | null>(null);
 
+  // A page can hand over the service the visitor was looking at (the /nuhome
+  // garage does this), so the form opens on it.
+  useEffect(() => {
+    if (active !== "book") return;
+    try {
+      const wanted = sessionStorage.getItem("dk_book_service");
+      sessionStorage.removeItem("dk_book_service");
+      if (wanted && (site.booking.services as readonly string[]).includes(wanted)) {
+        setForm((f) => ({ ...f, service: wanted }));
+      }
+    } catch {}
+  }, [active]);
+
   if (active !== "book") return null;
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
