@@ -1,10 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useOverlay } from "../lib/overlay-context";
 import { useAuth } from "../lib/auth-context";
 import { supabase } from "../integrations/supabase/client";
 import { site } from "../content/site";
 
 /* ─────────────  Shell  ───────────── */
+
+/**
+ * "solid" is the homepage look. "glass" (used by /nuhome) turns every pop-up
+ * into a see-through panel so the 3D garage stays visible behind it, and
+ * hides prices.
+ */
+export const OverlayThemeContext = createContext<"solid" | "glass">("solid");
 
 function OverlayShell({
   title,
@@ -15,6 +22,37 @@ function OverlayShell({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const theme = useContext(OverlayThemeContext);
+  if (theme === "glass") {
+    return (
+      <div
+        className="fixed inset-0 z-[100] flex items-end justify-center md:items-center p-3 md:p-8 nu-overlay-in"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 4.5rem)", paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)" }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div className="nu-glass nu-glass-panel relative w-full max-w-[860px] max-h-full overflow-y-auto overflow-x-hidden rounded-3xl">
+          <div className="px-5 md:px-9 pt-5 md:pt-7 pb-8">
+            <div className="flex items-center justify-between mb-5 md:mb-7">
+              <span className="text-[10px] md:text-xs tracking-[0.4em] uppercase text-neutral-200/80">{title}</span>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="w-10 h-10 flex items-center justify-center rounded-full border border-white/25 bg-white/5 text-white hover:text-[#F08A1D] hover:border-[#F08A1D] transition-colors"
+              >
+                <span className="text-xl leading-none">×</span>
+              </button>
+            </div>
+            <div className="nu-glass-body">{children}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className="fixed inset-0 z-[100] carbon"
@@ -107,6 +145,7 @@ export function MenuOverlay() {
 
 export function ServicesOverlay() {
   const { active, close, open } = useOverlay();
+  const theme = useContext(OverlayThemeContext);
   if (active !== "services") return null;
   return (
     <OverlayShell title="SERVICES" onClose={close}>
@@ -122,9 +161,11 @@ export function ServicesOverlay() {
           >
             <div className="flex items-baseline justify-between mb-4">
               <h3 className="font-display uppercase text-lg tracking-wide text-white">{s.name}</h3>
-              <span className="text-[10px] uppercase tracking-[0.24em] text-[#F08A1D]">
-                {s.from}
-              </span>
+              {theme === "solid" && (
+                <span className="text-[10px] uppercase tracking-[0.24em] text-[#F08A1D]">
+                  {s.from}
+                </span>
+              )}
             </div>
             <ul className="space-y-2 text-sm text-neutral-400">
               {s.bullets.map((b) => (

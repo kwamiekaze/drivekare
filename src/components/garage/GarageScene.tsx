@@ -1,19 +1,12 @@
 import { Environment, Lightformer, MeshReflectorMaterial, Sparkles } from "@react-three/drei";
-import { useFrame, useLoader, useThree, type ThreeElements } from "@react-three/fiber";
+import { useLoader, useThree, type ThreeElements } from "@react-three/fiber";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
-import {
-  Color,
-  InstancedMesh,
-  Matrix4,
-  Quaternion,
-  SRGBColorSpace,
-  TextureLoader,
-  Vector3,
-  type Mesh,
-  type PointLight,
-} from "three";
+import { Color, InstancedMesh, Matrix4, Quaternion, SRGBColorSpace, TextureLoader, Vector3 } from "three";
 import { DkBear } from "./DkBear";
+import { Outdoor } from "./Outdoor";
+import { WallCalendar } from "./WallCalendar";
+import { WallClock } from "./WallClock";
 import { LiftWithCar } from "./Car";
 import {
   Battery,
@@ -24,7 +17,6 @@ import {
   OilShelf,
   Polisher,
   PressureWasher,
-  ServiceVan,
   DiagCart,
   Extinguisher,
   FloorJack,
@@ -53,6 +45,7 @@ import {
   floorTexture,
   hazardTexture,
   neonTexture,
+  woodTexture,
   ribTexture,
   stencilTexture,
   wordmarkTexture,
@@ -115,7 +108,7 @@ function HexLights({ y = H - 0.35, edge = 0.95, cols = 9, rows = 7 }) {
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, edges.length]} frustumCulled={false}>
       <boxGeometry args={[1, 0.05, 0.07]} />
-      <meshBasicMaterial color={new Color(2.6, 2.6, 2.7)} toneMapped={false} />
+      <meshBasicMaterial color={new Color(2.5, 2.2, 1.75)} toneMapped={false} />
     </instancedMesh>
   );
 }
@@ -125,134 +118,188 @@ function Poster({ url, w, h, ...props }: { url: string; w: number; h: number } &
   tex.colorSpace = SRGBColorSpace;
   return (
     <group {...props}>
-      <mesh position={[0, 0, -0.02]} castShadow>
+      <mesh position={[0, 0, -0.03]} castShadow>
         <boxGeometry args={[w + 0.14, h + 0.14, 0.05]} />
-        <meshStandardMaterial color="#0c0f18" metalness={0.5} roughness={0.35} />
+        <meshStandardMaterial color="#3a2616" roughness={0.6} />
       </mesh>
-      <mesh position={[0, 0, 0.01]}>
+      <mesh position={[0, 0, 0.004]}>
         <planeGeometry args={[w, h]} />
         <meshStandardMaterial map={tex} roughness={0.55} />
       </mesh>
+      {/* picture light */}
+      <mesh position={[0, h / 2 + 0.16, 0.12]}>
+        <boxGeometry args={[w * 0.6, 0.04, 0.06]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <spotLight position={[0, h / 2 + 0.2, 0.45]} angle={0.7} penumbra={0.9} intensity={6} distance={3.5} color="#ffd6a0" target-position={[0, -0.4, 0]} />
     </group>
   );
 }
 
+/** Steady neon: no flutter. The glow comes from bloom, not from animating it. */
 function NeonSign() {
   const neon = useMemo(() => neonTexture(), []);
   const word = useMemo(() => wordmarkTexture(), []);
-  const flick = useRef<Mesh>(null);
-  const light = useRef<PointLight>(null);
-  useFrame(({ clock }) => {
-    const t = clock.elapsedTime;
-    // An occasional flutter, like a real tube warming up.
-    const f = Math.sin(t * 37) > 0.97 && Math.sin(t * 0.7) > 0.6 ? 0.55 : 1;
-    const mat = flick.current?.material as { color?: Color } | undefined;
-    mat?.color?.setRGB(2.6 * f, 1.35 * f, 0.6 * f);
-    if (light.current) light.current.intensity = 14 * f;
-  });
+  const wood = useMemo(() => woodTexture(), []);
   return (
-    <group position={[0, 5.15, -D / 2 + 0.08]}>
-      <mesh position={[0, 0, -0.02]}>
-        <boxGeometry args={[8.6, 1.9, 0.06]} />
-        <meshStandardMaterial color="#0a0e1a" metalness={0.4} roughness={0.5} />
+    <group position={[0, 5.0, -D / 2 + 0.11]}>
+      {/* warm plank feature wall behind the sign */}
+      <mesh position={[0, -0.2, 0]} receiveShadow>
+        <boxGeometry args={[9.4, 2.9, 0.04]} />
+        <meshStandardMaterial map={wood} roughness={0.7} color="#c9a07a" />
       </mesh>
-      <mesh ref={flick} position={[0, 0.2, 0.02]}>
+      <mesh position={[0, 0.2, 0.05]}>
         <planeGeometry args={[8, 2]} />
-        <meshBasicMaterial map={neon} transparent toneMapped={false} color={new Color(2.6, 1.35, 0.6)} depthWrite={false} />
+        <meshBasicMaterial map={neon} transparent toneMapped={false} color={new Color(2.4, 1.3, 0.6)} depthWrite={false} />
       </mesh>
-      <mesh position={[0, -0.72, 0.02]}>
+      <mesh position={[0, -0.78, 0.05]}>
         <planeGeometry args={[2.6, 0.65]} />
-        <meshBasicMaterial map={word} transparent toneMapped={false} color={new Color(1.3, 1.3, 1.3)} depthWrite={false} />
+        <meshBasicMaterial map={word} transparent toneMapped={false} color={new Color(1.2, 1.15, 1.1)} depthWrite={false} />
       </mesh>
-      <pointLight ref={light} position={[0, 0, 1.2]} color="#ff8a3a" intensity={14} distance={6} decay={2} />
+      <pointLight position={[0, 0, 1.4]} color="#ff9a4a" intensity={12} distance={6} decay={2} />
+    </group>
+  );
+}
+
+/** Warm filament pendants over the bench and the lift, the cosy note in a working shop. */
+function Pendants() {
+  const spots: Array<[number, number]> = [
+    [-6.8, -7.4],
+    [-5.2, -7.4],
+    [-3.6, -7.4],
+    [6.0, -2.6],
+    [7.6, -2.6],
+  ];
+  return (
+    <group>
+      {spots.map(([x, z]) => (
+        <group key={`${x}${z}`} position={[x, 0, z]}>
+          <mesh position={[0, 5.6, 0]}>
+            <cylinderGeometry args={[0.006, 0.006, 2.4, 6]} />
+            <meshStandardMaterial color="#111" />
+          </mesh>
+          <mesh position={[0, 4.35, 0]}>
+            <coneGeometry args={[0.26, 0.24, 24, 1, true]} />
+            <meshStandardMaterial color="#1a1d24" metalness={0.6} roughness={0.35} side={2} />
+          </mesh>
+          <mesh position={[0, 4.2, 0]}>
+            <sphereGeometry args={[0.07, 16, 12]} />
+            <meshBasicMaterial color={new Color(3.2, 2.1, 1.0)} toneMapped={false} />
+          </mesh>
+        </group>
+      ))}
+      <pointLight position={[-5.2, 4.0, -7.2]} intensity={16} distance={7} color="#ffc27a" />
+      <pointLight position={[6.8, 4.0, -2.6]} intensity={14} distance={7} color="#ffc27a" />
     </group>
   );
 }
 
 function Building({ mobile }: { mobile: boolean }) {
   const floorMap = useMemo(() => floorTexture(), []);
-  const sideRib = useMemo(() => ribTexture("#1a2342", [6, 1]), []);
-  const backRib = useMemo(() => ribTexture("#172039", [8, 1]), []);
+  const sideRib = useMemo(() => ribTexture("#2c2622", [6, 1]), []);
+  const backRib = useMemo(() => ribTexture("#2a2420", [8, 1]), []);
+  const wood = useMemo(() => woodTexture(), []);
+  const outsideRib = useMemo(() => ribTexture("#3b4252", [10, 1]), []);
   const hazard = useMemo(() => hazardTexture(), []);
   const bay = useMemo(() => stencilTexture("DK BAY 01"), []);
+  const wallMat = { roughness: 0.62, metalness: 0.3 } as const;
 
   return (
     <group>
-      {/* floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[W, D]} />
         <MeshReflectorMaterial
           map={floorMap}
           blur={mobile ? [100, 30] : [260, 80]}
           resolution={mobile ? 256 : 768}
           mixBlur={0.8}
-          mixStrength={mobile ? 2.5 : 3.5}
+          mixStrength={mobile ? 2.2 : 3.2}
           roughness={0.55}
           depthScale={0.8}
           minDepthThreshold={0.5}
           maxDepthThreshold={1.2}
-          color="#2f343e"
-          metalness={0.55}
+          color="#3a3a3e"
+          metalness={0.5}
           mirror={0}
         />
       </mesh>
-      {/* bay lines */}
-      {[-6.6, 0.2].map((x) => (
-        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.004, -3.6]}>
-          <planeGeometry args={[0.1, 9.5]} />
-          <meshStandardMaterial color={DK.orange} roughness={0.6} emissive={DK.orange} emissiveIntensity={0.12} />
+      {[-5.8, -0.6].map((x) => (
+        <mesh key={x} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0.006, -3.9]}>
+          <planeGeometry args={[0.1, 9]} />
+          <meshStandardMaterial color={DK.orange} roughness={0.6} />
         </mesh>
       ))}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.2, 0.005, -0.4]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-3.2, 0.008, -0.2]}>
         <planeGeometry args={[4.2, 1.05]} />
         <meshBasicMaterial map={bay} transparent opacity={0.8} depthWrite={false} />
       </mesh>
-      {/* hero ring under the bear */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.006, 2.6]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 2.6]}>
         <ringGeometry args={[1.75, 1.83, 96]} />
-        <meshBasicMaterial color={new Color(2.2, 1.0, 0.35)} toneMapped={false} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 2.6]}>
-        <ringGeometry args={[1.95, 1.97, 96]} />
-        <meshBasicMaterial color={DK.orange} transparent opacity={0.5} />
+        <meshBasicMaterial color={new Color(2.0, 1.0, 0.4)} toneMapped={false} />
       </mesh>
 
-      {/* walls */}
-      <mesh position={[0, H / 2, -D / 2]} receiveShadow>
+      {/* walls cast shadows too, so the sun stays outside */}
+      <mesh position={[0, H / 2, -D / 2 - 0.1]} receiveShadow castShadow>
         <boxGeometry args={[W, H, 0.2]} />
-        <meshStandardMaterial map={backRib} roughness={0.6} metalness={0.35} />
+        <meshStandardMaterial map={backRib} {...wallMat} />
       </mesh>
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[(s * W) / 2, H / 2, 0]} receiveShadow>
+        <mesh key={s} position={[s * (W / 2 + 0.1), H / 2, 0]} receiveShadow castShadow>
           <boxGeometry args={[0.2, H, D]} />
-          <meshStandardMaterial map={sideRib} roughness={0.6} metalness={0.35} />
+          <meshStandardMaterial map={sideRib} {...wallMat} />
         </mesh>
       ))}
-      {/* orange wainscot band */}
+      {/* warm timber wainscot with an orange cap rail, all the way round */}
       {[
-        { p: [0, 1.25, -D / 2 + 0.11], r: 0, l: W },
-        { p: [-W / 2 + 0.11, 1.25, 0], r: Math.PI / 2, l: D },
-        { p: [W / 2 - 0.11, 1.25, 0], r: -Math.PI / 2, l: D },
+        { p: [0, 0, -D / 2], r: 0, l: W },
+        { p: [-W / 2, 0, 0], r: Math.PI / 2, l: D },
+        { p: [W / 2, 0, 0], r: -Math.PI / 2, l: D },
       ].map((b, i) => (
-        <mesh key={i} position={b.p as [number, number, number]} rotation={[0, b.r, 0]}>
-          <planeGeometry args={[b.l, 0.12]} />
-          <meshStandardMaterial color={DK.orange} roughness={0.5} />
-        </mesh>
+        <group key={i} position={b.p as [number, number, number]} rotation={[0, b.r, 0]}>
+          <mesh position={[0, 0.62, 0.012]} receiveShadow>
+            <planeGeometry args={[b.l, 1.24]} />
+            <meshStandardMaterial map={wood} color="#b98a62" roughness={0.75} />
+          </mesh>
+          <mesh position={[0, 1.27, 0.03]}>
+            <boxGeometry args={[b.l, 0.07, 0.04]} />
+            <meshStandardMaterial color={DK.orange} roughness={0.45} />
+          </mesh>
+        </group>
       ))}
-      {/* front wall with the door opening */}
+      {/* front wall around the door: navy inside, lighter cladding outside */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (DOOR_W / 2 + (W / 2 - DOOR_W / 2) / 2), H / 2, D / 2]}>
-          <boxGeometry args={[W / 2 - DOOR_W / 2, H, 0.3]} />
-          <meshStandardMaterial map={sideRib} roughness={0.6} metalness={0.35} />
-        </mesh>
+        <group key={s} position={[s * (DOOR_W / 2 + (W / 2 - DOOR_W / 2) / 2), H / 2, D / 2 + 0.15]}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[W / 2 - DOOR_W / 2, H, 0.3]} />
+            <meshStandardMaterial map={sideRib} {...wallMat} />
+          </mesh>
+          <mesh position={[0, 0, 0.152]}>
+            <planeGeometry args={[W / 2 - DOOR_W / 2, H]} />
+            <meshStandardMaterial map={outsideRib} roughness={0.7} metalness={0.3} />
+          </mesh>
+        </group>
       ))}
-      <mesh position={[0, DOOR_H + (H - DOOR_H) / 2, D / 2]}>
-        <boxGeometry args={[DOOR_W, H - DOOR_H, 0.3]} />
-        <meshStandardMaterial map={sideRib} roughness={0.6} metalness={0.35} />
+      <group position={[0, DOOR_H + (H - DOOR_H) / 2, D / 2 + 0.15]}>
+        <mesh castShadow>
+          <boxGeometry args={[DOOR_W, H - DOOR_H, 0.3]} />
+          <meshStandardMaterial map={sideRib} {...wallMat} />
+        </mesh>
+        <mesh position={[0, 0, 0.152]}>
+          <planeGeometry args={[DOOR_W, H - DOOR_H]} />
+          <meshStandardMaterial map={outsideRib} roughness={0.7} metalness={0.3} />
+        </mesh>
+      </group>
+      {/* roof with parapet */}
+      <mesh position={[0, H + 0.1, 0]} castShadow receiveShadow>
+        <boxGeometry args={[W + 0.4, 0.2, D + 0.6]} />
+        <meshStandardMaterial color="#0b0f1c" roughness={0.9} />
       </mesh>
-      {/* door frame hazard edges and the rolled-up door drum */}
+      <mesh position={[0, H + 0.45, D / 2 + 0.32]} castShadow>
+        <boxGeometry args={[W + 0.4, 0.5, 0.2]} />
+        <meshStandardMaterial color="#2b303b" roughness={0.8} />
+      </mesh>
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * (DOOR_W / 2 - 0.08), DOOR_H / 2, D / 2 - 0.16]}>
+        <mesh key={s} position={[s * (DOOR_W / 2 - 0.08), DOOR_H / 2, D / 2 - 0.04]}>
           <boxGeometry args={[0.16, DOOR_H, 0.06]} />
           <meshStandardMaterial map={hazard} roughness={0.5} />
         </mesh>
@@ -261,31 +308,13 @@ function Building({ mobile }: { mobile: boolean }) {
         <cylinderGeometry args={[0.42, 0.42, DOOR_W, 40]} />
         <meshStandardMaterial color="#141b30" roughness={0.5} metalness={0.5} />
       </mesh>
-
-      {/* ceiling and trusses */}
-      <mesh position={[0, H, 0]}>
-        <boxGeometry args={[W, 0.2, D]} />
-        <meshStandardMaterial color="#0b1020" roughness={0.9} />
-      </mesh>
       {[-7.5, -4.5, -1.5, 1.5, 4.5, 7.5].map((z) => (
-        <group key={z} position={[0, H - 0.5, z]}>
-          <mesh>
-            <boxGeometry args={[W, 0.34, 0.12]} />
-            <meshStandardMaterial color="#1b2340" metalness={0.6} roughness={0.4} />
-          </mesh>
-          <mesh position={[0, -0.18, 0]}>
-            <boxGeometry args={[W, 0.03, 0.28]} />
-            <meshStandardMaterial color="#1b2340" metalness={0.6} roughness={0.4} />
-          </mesh>
-        </group>
+        <mesh key={z} position={[0, H - 0.5, z]}>
+          <boxGeometry args={[W, 0.34, 0.12]} />
+          <meshStandardMaterial color="#1b2340" metalness={0.6} roughness={0.4} />
+        </mesh>
       ))}
       <HexLights />
-
-      {/* outside: wet apron and night */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, D / 2 + 12]} receiveShadow>
-        <planeGeometry args={[60, 24]} />
-        <meshStandardMaterial color="#07090e" roughness={0.35} metalness={0.4} />
-      </mesh>
     </group>
   );
 }
@@ -293,37 +322,34 @@ function Building({ mobile }: { mobile: boolean }) {
 function Lights({ mobile }: { mobile: boolean }) {
   return (
     <>
-      <ambientLight intensity={0.12} />
-      <hemisphereLight args={["#b9c6ff", "#10131c", 0.35]} />
-      {/* key light on the bear */}
+      <ambientLight intensity={0.3} color="#ffe2c4" />
+      {/* key on the bear, warm */}
       <spotLight
         position={[3.5, 6.6, 7.5]}
         angle={0.42}
-        penumbra={0.7}
-        intensity={180}
+        penumbra={0.8}
+        intensity={170}
         distance={22}
         decay={2}
-        color="#fff1e0"
+        color="#ffe2c0"
         castShadow
         shadow-mapSize={mobile ? [1024, 1024] : [2048, 2048]}
-        shadow-bias={-0.0004}
-        target-position={[0, 1.1, 2.4]}
+        shadow-bias={-0.0003}
+        shadow-normalBias={0.03}
+        target-position={[0, 1.1, 2.6]}
       />
-      {/* rim light from behind */}
-      <spotLight position={[-3, 6, -2]} angle={0.5} penumbra={0.8} intensity={70} distance={16} color="#9fb6ff" target-position={[0, 1.8, 2.4]} />
-      {/* bay fills under the hex grid */}
+      <spotLight position={[-3, 6, -2]} angle={0.5} penumbra={0.8} intensity={55} distance={16} color="#b9c8ff" target-position={[0, 1.8, 2.6]} />
+      {/* spot for the car on the lift */}
+      <spotLight position={[-3.2, 6.6, -1]} angle={0.55} penumbra={0.9} intensity={110} distance={14} color="#fff4e6" target-position={[-3.2, 1.6, -4.6]} />
       {[
-        [0, 6, -3.5],
         [-8, 5.8, -1.5],
         [8, 5.8, -1.5],
         [-8, 5.8, 4.5],
         [8, 5.8, 4.5],
         [0, 5.8, 5],
       ].map((p, i) => (
-        <pointLight key={i} position={p as [number, number, number]} intensity={22} distance={12} decay={2} color="#eef2ff" />
+        <pointLight key={i} position={p as [number, number, number]} intensity={20} distance={12} decay={2} color="#ffe4c4" />
       ))}
-      {/* orange glow from the door side, outside */}
-      <pointLight position={[0, 3.5, 12]} intensity={8} distance={10} color="#9fb6ff" />
     </>
   );
 }
@@ -332,7 +358,6 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
   return (
     <group position={[0, 0, 2.6]}>
       <DkBear reducedMotion={reducedMotion} height={2.15} />
-      {/* the kit from the figure, laid out around his boots */}
       <OpenToolbox position={[-1.15, 0, 0.25]} rotation={[0, 0.35, 0]} scale={1.3} />
       <Tire position={[1.25, 0.34, -0.05]} rotation={[0, -0.5, 0]} />
       <JumpPack position={[0.95, 0, 0.55]} rotation={[0, -0.4, 0]} scale={1.2} />
@@ -349,38 +374,23 @@ function Hero({ reducedMotion }: { reducedMotion: boolean }) {
   );
 }
 
+/**
+ * Bays run left to right in the order the tour visits them:
+ * tires, battery (with the calendar corner), oil, the lift, diagnostics, detailing.
+ */
 function Zones({ reducedMotion }: { reducedMotion: boolean }) {
   return (
     <group>
-      {/* lift bay */}
-      <LiftWithCar position={[-3.2, 0, -4.6]} />
-      <JackStand position={[-4.8, 0, -2.6]} />
-      <JackStand position={[-1.5, 0, -2.6]} />
-      <Creeper position={[-2.4, 0, -2.3]} rotation={[0, 1.3, 0]} />
-      <OilDrum position={[-2.8, 0, -7.9]} color={DK.orange} />
-      <OilDrum position={[-2.1, 0, -8.2]} />
-
-      {/* repair wall */}
-      <Workbench position={[-5.6, 0, -8.35]} length={3.2} />
-      <Pegboard position={[-5.6, 2.35, -D / 2 + 0.14]} width={3.2} height={1.5} />
-      <Suspense fallback={null}>
-        <Poster url="/brand/nuhome/poster-toolkit.jpg" w={1.6} h={2.0} position={[4.6, 2.6, -D / 2 + 0.14]} />
-        <Poster url="/brand/nuhome/poster-portrait.jpg" w={2.3} h={1.6} position={[7.6, 2.6, -D / 2 + 0.14]} />
-      </Suspense>
-      <ToolChest position={[3.9, 0, -8.35]} width={1.3} />
-      <ToolChest position={[9.8, 0, -8.35]} width={1.8} height={1.7} />
-
-      {/* tires, left rear */}
+      {/* 1. tires: left wall, rear */}
       <TireRack position={[-W / 2 + 0.55, 0, -3.4]} rotation={[0, Math.PI / 2, 0]} length={5} />
       <TireChanger position={[-9.0, 0, -1.4]} rotation={[0, 0.7, 0]} />
       <WheelBalancer position={[-9.2, 0, -4.8]} rotation={[0, 0.9, 0]} />
       <TireStack position={[-8.4, 0, 0.9]} count={5} />
       <TireStack position={[-9.3, 0, 1.4]} count={3} />
-      <TireStack position={[-7.6, 0, 1.6]} count={4} />
       <Extinguisher position={[-W / 2 + 0.3, 0.9, 1.9]} />
 
-      {/* jump starts, left front */}
-      <group position={[-W / 2 + 0.6, 0, 4.6]} rotation={[0, Math.PI / 2, 0]}>
+      {/* 2. battery: left wall, front, with the calendar and clock in the corner */}
+      <group position={[-W / 2 + 0.6, 0, 4.4]} rotation={[0, Math.PI / 2, 0]}>
         {[0.1, 0.75, 1.4].map((y) => (
           <group key={y}>
             <mesh position={[0, y, 0]} receiveShadow>
@@ -421,35 +431,47 @@ function Zones({ reducedMotion }: { reducedMotion: boolean }) {
         )}
         <JumpPack position={[-0.3, 0.58, 0]} />
         <JumpPack position={[0.25, 0.58, 0.02]} rotation={[0, 0.3, 0]} />
-        <Battery position={[-0.25, 0.22, 0]} />
-        <Battery position={[0.2, 0.22, 0]} />
+        <Battery position={[-0.25, 0.225, 0]} />
+        <Battery position={[0.2, 0.225, 0]} />
+      </group>
+      <group position={[-W / 2 + 0.02, 0, 7.2]} rotation={[0, Math.PI / 2, 0]}>
+        <WallCalendar position={[0, 2.35, 0]} />
+        <WallClock position={[0, 3.95, 0]} />
       </group>
       <TrafficCone position={[-6.2, 0, 5.8]} />
-      <TrafficCone position={[-5.6, 0, 6.4]} rotation={[0, 0.6, 0]} />
 
-      {/* diagnostics, right */}
-      <DiagCart position={[8.4, 0, -1.2]} rotation={[0, -0.95, 0]} reducedMotion={reducedMotion} />
-      <ToolChest position={[W / 2 - 0.5, 0, -2.2]} rotation={[0, -Math.PI / 2, 0]} width={2.0} height={1.75} />
-      <ToolChest position={[W / 2 - 0.5, 0, -4.6]} rotation={[0, -Math.PI / 2, 0]} width={1.4} />
-      <Creeper position={[9.4, 0, 1.1]} rotation={[0, 0.3, 0]} />
+      {/* 3. oil and fluids: back wall, left */}
+      <OilShelf position={[-8.5, 0, -D / 2 + 0.4]} />
+      <Workbench position={[-5.2, 0, -8.35]} length={3.2} />
+      <Pegboard position={[-5.2, 2.35, -D / 2 + 0.03]} width={3.2} height={1.5} />
+      <OilDrum position={[-2.2, 0, -8.1]} color={DK.orange} />
+      <OilDrum position={[-1.5, 0, -8.35]} />
+      <DrainPan position={[-4.0, 0, -4.6]} />
 
-      {/* detailing, right front */}
+      {/* 4. the lift */}
+      <LiftWithCar position={[-3.2, 0, -4.6]} />
+      <JackStand position={[-4.8, 0, -2.6]} />
+      <JackStand position={[-1.5, 0, -2.6]} />
+      <Creeper position={[-2.4, 0, -2.3]} rotation={[0, 1.3, 0]} />
+
+      {/* 5. diagnostics: right, rear */}
+      <Suspense fallback={null}>
+        <Poster url="/brand/nuhome/poster-toolkit.jpg" w={1.6} h={2.0} position={[4.6, 2.7, -D / 2 + 0.03]} />
+        <Poster url="/brand/nuhome/poster-portrait.jpg" w={2.3} h={1.6} position={[8.0, 2.7, -D / 2 + 0.03]} />
+      </Suspense>
+      <DiagCart position={[7.0, 0, -2.8]} rotation={[0, -0.7, 0]} reducedMotion={reducedMotion} />
+      <ToolChest position={[W / 2 - 0.5, 0, -2.4]} rotation={[0, -Math.PI / 2, 0]} width={2.0} height={1.75} />
+      <ToolChest position={[W / 2 - 0.5, 0, -5.0]} rotation={[0, -Math.PI / 2, 0]} width={1.4} />
+      <ToolChest position={[10.4, 0, -8.35]} width={1.8} height={1.7} />
+      <Creeper position={[9.0, 0, 0.6]} rotation={[0, 0.3, 0]} />
+
+      {/* 6. detailing: right, front */}
       <DetailShelf position={[W / 2 - 0.4, 0, 4.6]} rotation={[0, -Math.PI / 2, 0]} />
       <PressureWasher position={[8.6, 0, 4.0]} rotation={[0, -0.9, 0]} />
       <Bucket position={[7.7, 0, 5.0]} />
       <Bucket position={[8.1, 0, 5.5]} color={DK.navy} />
       <Polisher position={[7.4, 0, 3.6]} rotation={[0, 0.8, 0]} />
       <TrafficCone position={[6.2, 0, 6.2]} />
-
-      {/* oil bay, back left beside the bench */}
-      <OilShelf position={[-9.4, 0, -D / 2 + 0.4]} />
-      <DrainPan position={[-4.0, 0, -4.6]} />
-
-      {/* the service van on the apron outside */}
-      <ServiceVan position={[8.8, 0, 13.4]} rotation={[0, 0.35, 0]} />
-      <TrafficCone position={[5.6, 0, 11.6]} />
-      <pointLight position={[11, 4.2, 19]} intensity={45} distance={16} color="#dfe6ff" />
-      <pointLight position={[5, 3, 15]} intensity={12} distance={8} color="#ff8a3a" />
     </group>
   );
 }
@@ -459,27 +481,27 @@ export function GarageScene({ reducedMotion }: { reducedMotion: boolean }) {
   const mobile = size.width < 768;
   return (
     <>
-      <color attach="background" args={[DK.night]} />
-      <fog attach="fog" args={[DK.night, 18, 46]} />
       <Environment resolution={256} frames={1}>
-        <Lightformer form="rect" intensity={3} position={[0, 6.5, 0]} rotation-x={Math.PI / 2} scale={[14, 10, 1]} />
+        <Lightformer form="rect" intensity={2.6} color="#fff0dc" position={[0, 6.5, 0]} rotation-x={Math.PI / 2} scale={[14, 10, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#ff9a4a" position={[0, 3, -9]} scale={[10, 2, 1]} />
-        <Lightformer form="rect" intensity={0.8} color="#8aa4ff" position={[-11, 3, 0]} rotation-y={Math.PI / 2} scale={[14, 4, 1]} />
-        <Lightformer form="rect" intensity={0.8} color="#ffffff" position={[11, 3, 0]} rotation-y={-Math.PI / 2} scale={[14, 4, 1]} />
+        <Lightformer form="rect" intensity={0.7} color="#9fb2ff" position={[-11, 3, 0]} rotation-y={Math.PI / 2} scale={[14, 4, 1]} />
+        <Lightformer form="rect" intensity={0.9} color="#ffe6cc" position={[11, 3, 0]} rotation-y={-Math.PI / 2} scale={[14, 4, 1]} />
       </Environment>
       <Lights mobile={mobile} />
       <Building mobile={mobile} />
       <NeonSign />
+      <Pendants />
       <Suspense fallback={null}>
+        <Outdoor mobile={mobile} />
         <Hero reducedMotion={reducedMotion} />
         <Zones reducedMotion={reducedMotion} />
       </Suspense>
       {!reducedMotion && (
-        <Sparkles count={mobile ? 60 : 140} scale={[20, 6, 16]} position={[0, 3.2, 0]} size={2.2} speed={0.18} opacity={0.35} color="#ffd9b0" />
+        <Sparkles count={mobile ? 50 : 110} scale={[20, 6, 16]} position={[0, 3.2, 0]} size={2.4} speed={0.12} opacity={0.3} color="#ffd9b0" />
       )}
-      <EffectComposer multisampling={mobile ? 0 : 4}>
-        <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.2} intensity={mobile ? 0.7 : 1.0} />
-        <Vignette eskil={false} offset={0.22} darkness={0.72} />
+      <EffectComposer multisampling={mobile ? 2 : 4}>
+        <Bloom mipmapBlur luminanceThreshold={1} luminanceSmoothing={0.25} intensity={mobile ? 0.6 : 0.85} />
+        <Vignette eskil={false} offset={0.24} darkness={0.6} />
       </EffectComposer>
     </>
   );

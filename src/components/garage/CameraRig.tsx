@@ -13,13 +13,13 @@ const AUTO_PAN: Record<
     secondsPerLeg: number;
   }
 > = {
-  welcome: { orbit: 0.18, mobileOrbit: 0.14, lateral: 0, mobileLateral: 0, secondsPerLeg: 9 },
-  detailing: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 7 },
+  welcome: { orbit: 0.16, mobileOrbit: 0.12, lateral: 0, mobileLateral: 0, secondsPerLeg: 10 },
+  tires: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.4, mobileLateral: 0.25, secondsPerLeg: 8 },
+  battery: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 8 },
   oil: { orbit: 0.06, mobileOrbit: 0.05, lateral: 0.4, mobileLateral: 0.25, secondsPerLeg: 8 },
-  tires: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.4, mobileLateral: 0.25, secondsPerLeg: 7 },
-  battery: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 7 },
-  diagnostics: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 7 },
-  fleet: { orbit: 0.1, mobileOrbit: 0.08, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 8 },
+  lift: { orbit: 0.12, mobileOrbit: 0.1, lateral: 0.2, mobileLateral: 0.15, secondsPerLeg: 9 },
+  diagnostics: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 8 },
+  detailing: { orbit: 0.08, mobileOrbit: 0.06, lateral: 0.3, mobileLateral: 0.2, secondsPerLeg: 8 },
 };
 
 /** Widest vertical angle a width-driven view may open to on a tall screen. */
@@ -56,46 +56,46 @@ interface TourStop {
  */
 const WELCOME_TOUR: TourStop[] = [
   {
-    // From the apron, looking in through the open roll-up door.
-    pos: [0, 3.4, 13.2],
-    target: [0, 2.1, -1.5],
-    fov: 44,
-    mobilePos: [0, 3.2, 14.5],
-    mobileTarget: [0, 1.0, -1.5],
-    mobileFov: 58,
+    // The welcome frame: the lit door from the lot.
+    pos: [2.5, 4.0, 26],
+    target: [1.2, 3.0, 4],
+    fov: 46,
+    mobilePos: [1.5, 3.4, 27],
+    mobileTarget: [0.6, 2.8, 4],
+    mobileFov: 60,
     hold: 0,
-    travel: 9,
+    travel: 10,
   },
   {
-    // Through the door and face to face with the bear.
-    pos: [1.1, 2.0, 6.4],
+    // Out across the lot: the van in its bay and the sign.
+    pos: [-4, 3.6, 24],
+    target: [4, 2.2, 12],
+    fov: 50,
+    mobilePos: [-4, 3.8, 26],
+    mobileFov: 62,
+    hold: 1.5,
+    travel: 10,
+  },
+  {
+    // In through the door, face to face with the bear.
+    pos: [1.1, 2.0, 6.6],
     target: [0, 1.7, 2.6],
     fov: 40,
-    mobilePos: [1.0, 2.0, 7.6],
+    mobilePos: [1.0, 2.0, 7.8],
     mobileTarget: [0, 1.5, 2.6],
     mobileFov: 54,
-    hold: 1.8,
-    travel: 8,
-  },
-  {
-    // Around his shoulder to the car up on the lift.
-    pos: [-3.6, 1.6, 0.6],
-    target: [0.4, 2.0, -4.3],
-    fov: 50,
-    mobilePos: [-3.2, 1.7, 1.6],
-    mobileFov: 60,
-    hold: 1.4,
-    travel: 8,
-  },
-  {
-    // Sweep across the tire bay and back out the door.
-    pos: [-2.6, 2.6, 3.4],
-    target: [-9.8, 1.4, -2.2],
-    fov: 50,
-    mobilePos: [-2.4, 2.7, 4.6],
-    mobileFov: 60,
-    hold: 1.2,
+    hold: 2,
     travel: 9,
+  },
+  {
+    // Low under the lifted car.
+    pos: [1.0, 1.05, -0.6],
+    target: [-3.2, 1.9, -4.6],
+    fov: 50,
+    mobilePos: [1.4, 1.1, 0.4],
+    mobileFov: 62,
+    hold: 2,
+    travel: 10,
   },
 ];
 

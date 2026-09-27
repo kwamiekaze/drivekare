@@ -18,10 +18,10 @@ export default function GarageCanvas({
 }) {
   return (
     <Canvas
-      shadows="soft"
+      shadows
       dpr={[1, 1.6]}
       gl={{ antialias: false, powerPreference: "high-performance", toneMapping: ACESFilmicToneMapping, toneMappingExposure: 1.05 }}
-      camera={{ position: view.pos, fov: 44, near: 0.1, far: 90 }}
+      camera={{ position: view.pos, fov: 44, near: 0.15, far: 320 }}
     >
       <GarageScene reducedMotion={reducedMotion} />
       <CameraRig view={view} input={input} reducedMotion={reducedMotion} introStarted={introStarted} />

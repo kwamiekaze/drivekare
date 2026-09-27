@@ -86,6 +86,7 @@ export const site = {
       "Tire Service",
       "Battery & Electrical",
       "Diagnostics",
+      "Brakes & Suspension",
       "Fleet Care",
     ],
     successTitle: "WE'RE ROLLING YOUR WAY",

@@ -1,13 +1,15 @@
 import { useFrame, useLoader, type ThreeElements } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useLayoutEffect, useMemo, useRef } from "react";
 import {
+  InstancedMesh,
+  Object3D,
   CanvasTexture,
   SRGBColorSpace,
   TextureLoader,
   type Mesh,
 } from "three";
 import { BRAND_LOGO } from "./brand";
-import { Wheel } from "./Car";
+import { Wheel, tireGeometry, tireMaterial } from "./Car";
 import { batteryLabel, DK, labelTexture, pegboardTexture } from "./textures";
 import { LugWrench, Screwdriver, Socket, Wrench } from "./tools";
 
@@ -19,7 +21,7 @@ function LogoDecal({ size = 0.2, ...props }: { size?: number } & ThreeElements["
   return (
     <mesh {...props}>
       <planeGeometry args={[size * 1.07, size]} />
-      <meshStandardMaterial map={tex} transparent alphaTest={0.25} roughness={0.5} polygonOffset polygonOffsetFactor={-4} />
+      <meshStandardMaterial map={tex} alphaTest={0.4} roughness={0.5} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-2} />
     </mesh>
   );
 }
@@ -52,7 +54,7 @@ export function ToolChest({ width = 1.4, height = 1.6, ...props }: { width?: num
         const h = (baseH - 0.06) / drawers;
         const y = 0.15 + h * i + h / 2;
         return (
-          <group key={i} position={[0, y, d / 2 + 0.006]}>
+          <group key={i} position={[0, y, d / 2 + 0.01]}>
             <mesh>
               <boxGeometry args={[width - 0.06, h - 0.018, 0.012]} />
               <meshStandardMaterial color="#232d52" metalness={0.4} roughness={0.35} />
@@ -75,13 +77,13 @@ export function ToolChest({ width = 1.4, height = 1.6, ...props }: { width?: num
         <meshStandardMaterial {...orangePaint} />
       </mesh>
       {Array.from({ length: 3 }).map((_, i) => (
-        <mesh key={i} position={[0, 0.12 + baseH + 0.12 + (topH / 3.3) * i + 0.04, (d - 0.12) / 2 - 0.05 + 0.006]}>
+        <mesh key={i} position={[0, 0.12 + baseH + 0.12 + (topH / 3.3) * i + 0.04, (d - 0.12) / 2 - 0.05 + 0.01]}>
           <boxGeometry args={[width - 0.08, topH / 3.6, 0.012]} />
           <meshStandardMaterial color="#d8661a" metalness={0.3} roughness={0.35} />
         </mesh>
       ))}
-      <LogoDecal size={0.26} position={[width / 2 + 0.002, 0.12 + baseH * 0.6, 0]} rotation={[0, Math.PI / 2, 0]} />
-      <LogoDecal size={0.26} position={[-width / 2 - 0.002, 0.12 + baseH * 0.6, 0]} rotation={[0, -Math.PI / 2, 0]} />
+      <LogoDecal size={0.26} position={[width / 2 + 0.006, 0.12 + baseH * 0.6, 0]} rotation={[0, Math.PI / 2, 0]} />
+      <LogoDecal size={0.26} position={[-width / 2 - 0.006, 0.12 + baseH * 0.6, 0]} rotation={[0, -Math.PI / 2, 0]} />
     </group>
   );
 }
@@ -97,8 +99,8 @@ export function OpenToolbox(props: G) {
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial {...navyPaint} />
       </mesh>
-      <mesh position={[0, h - 0.015, 0]}>
-        <boxGeometry args={[w + 0.02, 0.03, d + 0.02]} />
+      <mesh position={[0, h - 0.012, 0]}>
+        <boxGeometry args={[w + 0.02, 0.034, d + 0.02]} />
         <meshStandardMaterial {...orangePaint} />
       </mesh>
       {/* lid, swung open */}
@@ -108,7 +110,7 @@ export function OpenToolbox(props: G) {
           <meshStandardMaterial {...orangePaint} />
         </mesh>
       </group>
-      <LogoDecal size={0.15} position={[0, h * 0.45, d / 2 + 0.002]} />
+      <LogoDecal size={0.15} position={[0, h * 0.45, d / 2 + 0.006]} />
       {[-0.22, -0.13, -0.04].map((x, i) => (
         <Wrench key={x} length={0.28 + i * 0.03} position={[x, h + 0.08, 0]} rotation={[0, 0, 0.08 * i]} />
       ))}
@@ -120,24 +122,54 @@ export function OpenToolbox(props: G) {
 }
 
 export function Tire({ ...props }: G) {
-  return <Wheel radius={0.34} width={0.24} caliper={false} rimColor="#2b2e35" {...props} />;
+  return <Wheel radius={0.34} width={0.24} brakes={false} rimColor="#2b2e35" {...props} />;
+}
+
+/**
+ * Bare tires, all drawn as one instanced mesh: a rack of thirty tires costs a
+ * single draw call, which keeps the tire bay cheap on phones.
+ */
+export function InstancedTires({
+  items,
+  radius = 0.34,
+  width = 0.23,
+}: {
+  items: Array<{ p: [number, number, number]; r: [number, number, number] }>;
+  radius?: number;
+  width?: number;
+}) {
+  const ref = useRef<InstancedMesh>(null);
+  const geo = useMemo(() => tireGeometry(radius, width), [radius, width]);
+  const mat = useMemo(() => tireMaterial(), []);
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const o = new Object3D();
+    items.forEach((it, i) => {
+      o.position.set(...it.p);
+      o.rotation.set(...it.r);
+      o.updateMatrix();
+      mesh.setMatrixAt(i, o.matrix);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, [items]);
+  return <instancedMesh ref={ref} args={[geo, mat, items.length]} castShadow receiveShadow />;
 }
 
 /** Tires stacked flat, the way a shop keeps them. */
 export function TireStack({ count = 4, ...props }: { count?: number } & G) {
+  const items = useMemo(
+    () =>
+      Array.from({ length: count }).map((_, i) => ({
+        p: [Math.sin(i * 2.1) * 0.02, 0.12 + i * 0.235, Math.cos(i * 1.7) * 0.02] as [number, number, number],
+        r: [0, i * 0.7, Math.PI / 2] as [number, number, number],
+      })),
+    [count],
+  );
   return (
     <group {...props}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Wheel
-          key={i}
-          radius={0.33}
-          width={0.23}
-          caliper={false}
-          rimColor="#2b2e35"
-          position={[Math.sin(i * 2.1) * 0.02, 0.12 + i * 0.235, Math.cos(i * 1.7) * 0.02]}
-          rotation={[0, i * 0.7, Math.PI / 2]}
-        />
-      ))}
+      <InstancedTires items={items} radius={0.33} />
     </group>
   );
 }
@@ -146,6 +178,17 @@ export function TireStack({ count = 4, ...props }: { count?: number } & G) {
 export function TireRack({ length = 3.2, ...props }: { length?: number } & G) {
   const levels = [0.05, 0.95, 1.85];
   const per = Math.floor(length / 0.3);
+  const items = useMemo(
+    () =>
+      levels.flatMap((y) =>
+        Array.from({ length: per }).map((_, i) => ({
+          p: [-length / 2 + 0.2 + (i * (length - 0.3)) / Math.max(per - 1, 1), y + 0.4, 0] as [number, number, number],
+          r: [0, 0, 0] as [number, number, number],
+        })),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [length, per],
+  );
   return (
     <group {...props}>
       {[-length / 2, 0, length / 2].map((x) =>
@@ -156,26 +199,15 @@ export function TireRack({ length = 3.2, ...props }: { length?: number } & G) {
           </mesh>
         )),
       )}
-      {levels.map((y) => (
-        <group key={y}>
-          {[-0.28, 0.28].map((z) => (
-            <mesh key={z} position={[0, y + 0.04, z]}>
-              <boxGeometry args={[length + 0.06, 0.06, 0.05]} />
-              <meshStandardMaterial {...navyPaint} />
-            </mesh>
-          ))}
-          {Array.from({ length: per }).map((_, i) => (
-            <Wheel
-              key={i}
-              radius={0.34}
-              width={0.22}
-              caliper={false}
-              rimColor={i % 3 === 0 ? "#9aa1aa" : "#2b2e35"}
-              position={[-length / 2 + 0.2 + i * (length - 0.3) / Math.max(per - 1, 1), y + 0.4, 0]}
-            />
-          ))}
-        </group>
-      ))}
+      {levels.map((y) =>
+        [-0.28, 0.28].map((z) => (
+          <mesh key={`${y}${z}`} position={[0, y + 0.04, z]}>
+            <boxGeometry args={[length + 0.06, 0.06, 0.05]} />
+            <meshStandardMaterial {...navyPaint} />
+          </mesh>
+        )),
+      )}
+      <InstancedTires items={items} radius={0.34} width={0.22} />
     </group>
   );
 }
@@ -219,7 +251,7 @@ export function FloorJack(props: G) {
         <cylinderGeometry args={[0.018, 0.018, 0.8, 10]} />
         <meshStandardMaterial color="#c9ced6" metalness={1} roughness={0.25} />
       </mesh>
-      <LogoDecal size={0.1} position={[0, 0.17, 0.167]} />
+      <LogoDecal size={0.1} position={[0, 0.17, 0.171]} />
     </group>
   );
 }
@@ -278,11 +310,11 @@ export function JumpPack(props: G) {
         <torusGeometry args={[0.09, 0.018, 8, 24, Math.PI]} />
         <meshStandardMaterial color="#222" />
       </mesh>
-      <mesh position={[0.06, 0.2, 0.111]}>
+      <mesh position={[0.06, 0.2, 0.115]}>
         <planeGeometry args={[0.1, 0.05]} />
         <meshStandardMaterial color="#8fffb4" emissive="#4dff8a" emissiveIntensity={1.6} toneMapped={false} />
       </mesh>
-      <LogoDecal size={0.09} position={[-0.08, 0.2, 0.112]} />
+      <LogoDecal size={0.09} position={[-0.08, 0.2, 0.116]} />
       <Clamp color="#d42a1c" position={[0.24, 0.12, 0.05]} rotation={[0, 0, -0.3]} />
       <Clamp color="#16171a" position={[0.28, 0.1, -0.05]} rotation={[0, 0, -0.5]} />
       {/* cables */}
@@ -306,7 +338,7 @@ export function Battery(props: G) {
         <boxGeometry args={[0.3, 0.2, 0.17]} />
         <meshStandardMaterial color="#121418" roughness={0.6} />
       </mesh>
-      <mesh position={[0, 0.1, 0.0855]}>
+      <mesh position={[0, 0.1, 0.089]}>
         <planeGeometry args={[0.3, 0.15]} />
         <meshStandardMaterial map={label} roughness={0.5} />
       </mesh>
@@ -366,12 +398,12 @@ export function Scanner(props: G) {
         <boxGeometry args={[0.18, 0.04, 0.3]} />
         <meshStandardMaterial {...orangePaint} />
       </mesh>
-      <mesh position={[0, 0.042, -0.05]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 0.046, -0.05]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[0.13, 0.1]} />
         <meshStandardMaterial color="#9fe7ff" emissive="#5fd4ff" emissiveIntensity={1.4} toneMapped={false} />
       </mesh>
       {Array.from({ length: 9 }).map((_, i) => (
-        <mesh key={i} position={[-0.045 + (i % 3) * 0.045, 0.043, 0.04 + Math.floor(i / 3) * 0.035]}>
+        <mesh key={i} position={[-0.045 + (i % 3) * 0.045, 0.046, 0.04 + Math.floor(i / 3) * 0.035]}>
           <boxGeometry args={[0.03, 0.01, 0.022]} />
           <meshStandardMaterial color={DK.navy} />
         </mesh>
@@ -397,7 +429,7 @@ export function HardCase(props: G) {
           <meshStandardMaterial {...orangePaint} />
         </mesh>
       ))}
-      <LogoDecal size={0.12} position={[0, 0.201, 0]} rotation={[-Math.PI / 2, 0, 0]} />
+      <LogoDecal size={0.12} position={[0, 0.205, 0]} rotation={[-Math.PI / 2, 0, 0]} />
     </group>
   );
 }
@@ -415,7 +447,7 @@ export function OilDrum({ color = DK.navy, ...props }: { color?: string } & G) {
           <meshStandardMaterial color={color} metalness={0.5} roughness={0.4} />
         </mesh>
       ))}
-      <LogoDecal size={0.2} position={[0, 0.45, 0.292]} />
+      <LogoDecal size={0.2} position={[0, 0.45, 0.297]} />
     </group>
   );
 }
@@ -427,7 +459,7 @@ export function JerryCan({ color = "#c8321f", ...props }: { color?: string } & G
         <boxGeometry args={[0.34, 0.46, 0.16]} />
         <meshStandardMaterial color={color} roughness={0.45} metalness={0.2} />
       </mesh>
-      <mesh position={[0, 0.24, 0.081]}>
+      <mesh position={[0, 0.24, 0.085]}>
         <boxGeometry args={[0.28, 0.3, 0.005]} />
         <meshStandardMaterial color={color} roughness={0.3} metalness={0.2} />
       </mesh>
@@ -455,7 +487,7 @@ export function TireChanger(props: G) {
         <cylinderGeometry args={[0.36, 0.36, 0.05, 32]} />
         <meshStandardMaterial color="#555b63" metalness={0.9} roughness={0.3} />
       </mesh>
-      <Wheel radius={0.34} width={0.22} caliper={false} rimColor="#9aa1aa" position={[0, 1.07, 0]} rotation={[0, 0, Math.PI / 2]} />
+      <Wheel radius={0.34} width={0.22} brakes={false} rimColor="#9aa1aa" position={[0, 1.07, 0]} rotation={[0, 0, Math.PI / 2]} />
       <mesh position={[0, 1.1, -0.45]} castShadow>
         <boxGeometry args={[0.14, 2.2, 0.14]} />
         <meshStandardMaterial {...orangePaint} />
@@ -468,7 +500,7 @@ export function TireChanger(props: G) {
         <cylinderGeometry args={[0.02, 0.02, 1.0, 10]} />
         <meshStandardMaterial color="#c9ced6" metalness={1} roughness={0.2} />
       </mesh>
-      <LogoDecal size={0.22} position={[0, 0.55, 0.352]} />
+      <LogoDecal size={0.22} position={[0, 0.55, 0.356]} />
     </group>
   );
 }
@@ -492,7 +524,7 @@ export function WheelBalancer(props: G) {
         <cylinderGeometry args={[0.03, 0.03, 0.4, 12]} />
         <meshStandardMaterial color="#c9ced6" metalness={1} roughness={0.25} />
       </mesh>
-      <Wheel radius={0.33} width={0.22} caliper={false} rimColor="#2b2e35" position={[0.62, 0.72, 0]} rotation={[0, 0, 0]} />
+      <Wheel radius={0.33} width={0.22} brakes={false} rimColor="#2b2e35" position={[0.62, 0.72, 0]} rotation={[0, 0, 0]} />
       <mesh position={[0.62, 0.72, 0]} rotation={[0, 0, 0]}>
         <boxGeometry args={[0.02, 0.02, 0.02]} />
       </mesh>
@@ -740,7 +772,7 @@ export function LockoutBoard(props: G) {
         <boxGeometry args={[1.2, 0.9, 0.03]} />
         <meshStandardMaterial color="#22294a" roughness={0.8} />
       </mesh>
-      <mesh position={[0, 0.34, 0.017]}>
+      <mesh position={[0, 0.34, 0.021]}>
         <planeGeometry args={[0.6, 0.15]} />
         <meshStandardMaterial map={tex} />
       </mesh>
@@ -796,7 +828,7 @@ export function PressureWasher(props: G) {
           <meshStandardMaterial {...orangePaint} />
         </mesh>
       </group>
-      <LogoDecal size={0.16} position={[0, 0.42, 0.226]} />
+      <LogoDecal size={0.16} position={[0, 0.42, 0.23]} />
     </group>
   );
 }
@@ -963,15 +995,15 @@ export function ServiceVan(props: G) {
       </mesh>
       {[1, -1].map((s) => (
         <group key={s}>
-          <mesh position={[0, 0.85, s * 1.005]} rotation={[0, s === 1 ? 0 : Math.PI, 0]}>
+          <mesh position={[0, 0.85, s * 1.008]} rotation={[0, s === 1 ? 0 : Math.PI, 0]}>
             <planeGeometry args={[4.4, 0.34]} />
             <meshStandardMaterial map={stripe} roughness={0.4} emissive={DK.orange} emissiveIntensity={0.15} />
           </mesh>
-          <mesh position={[2.0, 1.75, s * 1.005]} rotation={[0, s === 1 ? 0 : Math.PI, 0]}>
+          <mesh position={[2.0, 1.75, s * 1.008]} rotation={[0, s === 1 ? 0 : Math.PI, 0]}>
             <planeGeometry args={[0.8, 0.55]} />
             <meshPhysicalMaterial color="#05070b" roughness={0.05} clearcoat={1} />
           </mesh>
-          <LogoDecal size={0.9} position={[-0.7, 1.7, s * 1.006]} rotation={[0, s === 1 ? 0 : Math.PI, 0]} />
+          <LogoDecal size={0.9} position={[-0.7, 1.7, s * 1.012]} rotation={[0, s === 1 ? 0 : Math.PI, 0]} />
         </group>
       ))}
       {/* lights */}

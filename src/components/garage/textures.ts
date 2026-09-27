@@ -1,7 +1,7 @@
 import {
   CanvasTexture,
   ClampToEdgeWrapping,
-  LinearFilter,
+  LinearMipmapLinearFilter,
   RepeatWrapping,
   SRGBColorSpace,
   type Texture,
@@ -45,8 +45,11 @@ function make(
   } else {
     tex.wrapS = tex.wrapT = ClampToEdgeWrapping;
   }
+  // Mipmapped and anisotropic: without mips, fine patterns (pegboard holes,
+  // wall ribs, lettering) shimmer as the camera moves.
   tex.anisotropy = 8;
-  tex.minFilter = LinearFilter;
+  tex.generateMipmaps = true;
+  tex.minFilter = LinearMipmapLinearFilter;
   cache.set(key, tex);
   return tex;
 }
@@ -213,8 +216,10 @@ export function neonTexture() {
     ctx.textBaseline = "middle";
     ctx.font = "italic 700 190px 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif";
     ctx.shadowColor = "#ff8a2a";
-    ctx.shadowBlur = 24;
+    ctx.shadowBlur = 28;
     ctx.fillStyle = "#ffe3c8";
+    ctx.fillText("Care that comes to you.", w / 2, h / 2 + 6);
+    ctx.shadowBlur = 0;
     ctx.fillText("Care that comes to you.", w / 2, h / 2 + 6);
   });
 }
@@ -291,5 +296,104 @@ export function labelTexture(text: string, bg: string, fg: string) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(text, w / 2, h / 2 + 3);
+  });
+}
+
+/** Tire tread and sidewall: grooves around, blocks across, raised lettering. */
+export function tireTexture() {
+  return make(
+    "tire",
+    1024,
+    256,
+    (ctx, w, h) => {
+      ctx.fillStyle = "#1b1c1f";
+      ctx.fillRect(0, 0, w, h);
+      // tread band sits in the middle of the lathe profile
+      const t0 = h * 0.36;
+      const t1 = h * 0.64;
+      ctx.fillStyle = "#141518";
+      ctx.fillRect(0, t0, w, t1 - t0);
+      ctx.fillStyle = "#0a0b0c";
+      for (let x = 0; x < w; x += 16) {
+        ctx.fillRect(x, t0, 5, t1 - t0);
+      }
+      for (const y of [0.42, 0.5, 0.58]) ctx.fillRect(0, h * y - 2, w, 4);
+      ctx.fillStyle = "#2a2b2f";
+      ctx.font = "700 20px 'Arial Black', sans-serif";
+      ctx.textBaseline = "middle";
+      for (let x = 0; x < w; x += 256) {
+        ctx.fillText("DRIVEKARE  SPORT", x + 20, h * 0.2);
+        ctx.fillText("DRIVEKARE  SPORT", x + 140, h * 0.82);
+      }
+    },
+    { repeat: [2, 1] },
+  );
+}
+
+/** Plank wood for benches and the accent wall. */
+export function woodTexture() {
+  return make(
+    "wood",
+    512,
+    512,
+    (ctx, w, h) => {
+      const r = rng(23);
+      const planks = 6;
+      for (let i = 0; i < planks; i += 1) {
+        const base = 110 + Math.floor(r() * 40);
+        ctx.fillStyle = `rgb(${base + 40},${base - 10},${base - 55})`;
+        ctx.fillRect(0, (i * h) / planks, w, h / planks);
+        for (let k = 0; k < 40; k += 1) {
+          ctx.strokeStyle = `rgba(60,30,10,${0.08 + r() * 0.12})`;
+          ctx.lineWidth = 1 + r() * 2;
+          ctx.beginPath();
+          const y = (i * h) / planks + r() * (h / planks);
+          ctx.moveTo(0, y);
+          ctx.bezierCurveTo(w * 0.3, y + r() * 6 - 3, w * 0.7, y + r() * 6 - 3, w, y);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "rgba(20,10,4,0.55)";
+        ctx.fillRect(0, (i * h) / planks, w, 2);
+      }
+    },
+    { repeat: [1, 1] },
+  );
+}
+
+/** Parking lot asphalt with a fine aggregate. */
+export function asphaltTexture() {
+  return make(
+    "asphalt",
+    512,
+    512,
+    (ctx, w, h) => {
+      ctx.fillStyle = "#2b2d31";
+      ctx.fillRect(0, 0, w, h);
+      const r = rng(31);
+      for (let i = 0; i < 16000; i += 1) {
+        const g = 30 + Math.floor(r() * 50);
+        ctx.fillStyle = `rgba(${g},${g},${g + 4},0.7)`;
+        ctx.fillRect(r() * w, r() * h, 1.5, 1.5);
+      }
+    },
+    { repeat: [10, 10] },
+  );
+}
+
+export function signTexture() {
+  return make("bigsign", 1024, 256, (ctx, w, h) => {
+    ctx.fillStyle = "#0d1326";
+    ctx.fillRect(0, 0, w, h);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "800 150px 'Anton', 'Arial Black', sans-serif";
+    ctx.textAlign = "left";
+    const a = ctx.measureText("DRIVE").width;
+    const b = ctx.measureText("KARE").width;
+    const x0 = (w - a - b - 12) / 2;
+    ctx.fillStyle = "#e6dccb";
+    ctx.fillText("DRIVE", x0, h / 2 + 8);
+    ctx.fillStyle = "#e8741e";
+    ctx.fillText("KARE", x0 + a + 12, h / 2 + 8);
   });
 }
