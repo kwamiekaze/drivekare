@@ -214,3 +214,23 @@ html { scroll-behavior: auto; }
 @media (prefers-reduced-motion: reduce) {
   .nu-panel, .nu-panel .nu-stagger > *, .nu-overlay-in, .nu-overlay-in > *, .nu-menu-item { animation: none; }
 }
+
+/* /lot: the parking lot. Pins float over the 3D scene, so they carry their own look. */
+.lot-pin { display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: auto; cursor: pointer; transition: opacity 300ms, transform 300ms; transform: translateY(0); }
+.lot-pin.is-dim { opacity: 0.45; }
+.lot-pin.is-sel { transform: translateY(-4px) scale(1.08); }
+.lot-pin-ring { --p: 0deg; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 999px; padding: 3px; background: conic-gradient(#59c8ff var(--p), rgba(255,255,255,0.28) 0); box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+.lot-pin[data-phase="issue"] .lot-pin-ring { background: rgba(240,138,29,0.95); animation: lot-pulse 1.8s ease-out infinite; }
+.lot-pin[data-phase="done"] .lot-pin-ring { background: #39e07a; }
+.lot-pin-core { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 999px; background: #0d1326; color: #fff; }
+.lot-pin[data-phase="issue"] .lot-pin-core { background: #1c1209; color: #ffb066; }
+.lot-pin[data-phase="done"] .lot-pin-core { background: #0b2a18; color: #6dffa3; }
+.lot-pin-label { font: 600 10px/1 Inter, system-ui, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #fff; background: rgba(10,12,18,0.72); border: 1px solid rgba(255,255,255,0.18); padding: 4px 8px; border-radius: 999px; white-space: nowrap; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.lot-readout { font: 600 11px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7ae7ff; background: rgba(6,16,24,0.8); border: 1px solid rgba(122,231,255,0.5); padding: 6px 10px; border-radius: 8px; white-space: nowrap; transition: opacity 200ms; box-shadow: 0 0 18px rgba(122,231,255,0.35); }
+.lot-bubble { font: 600 12px/1.25 Inter, system-ui, sans-serif; color: #0d1326; background: #fff; padding: 7px 11px; border-radius: 14px 14px 14px 3px; white-space: nowrap; box-shadow: 0 8px 22px rgba(0,0,0,0.4); animation: nu-rise 300ms cubic-bezier(0.22,1,0.36,1) both; }
+@keyframes lot-pulse { 0% { box-shadow: 0 0 0 0 rgba(240,138,29,0.65), 0 6px 18px rgba(0,0,0,0.45); } 100% { box-shadow: 0 0 0 18px rgba(240,138,29,0), 0 6px 18px rgba(0,0,0,0.45); } }
+.lot-range { -webkit-appearance: none; appearance: none; height: 4px; width: 100%; border-radius: 999px; background: linear-gradient(90deg, #1b2a52, #8fc3ee 50%, #ffd27a); outline-offset: 6px; }
+.lot-range::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 3px solid #F08A1D; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+.lot-range::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid #F08A1D; }
+@media (prefers-reduced-motion: reduce) { .lot-pin[data-phase="issue"] .lot-pin-ring { animation: none; } .lot-bubble { animation: none; } }
+.lot-ui .nu-glass { background: linear-gradient(180deg, rgba(10, 12, 18, 0.62), rgba(8, 10, 16, 0.74)); }
