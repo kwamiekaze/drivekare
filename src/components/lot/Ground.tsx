@@ -236,6 +236,9 @@ export function Ground({ mobile }: { mobile: boolean }) {
   const lotMap = useMemo(lotAsphalt, []);
   useMemo(() => {
     mats.lot.map = lotMap;
+    mats.lot.bumpMap = lotMap;
+    mats.lot.bumpScale = 1.6;
+    mats.lot.envMapIntensity = 0.35;
     mats.lot.needsUpdate = true;
   }, [lotMap]);
 

@@ -79,7 +79,7 @@ export function themeAt(d: number): Theme {
   out.sunPos = [Math.sin(az) * Math.cos(el * 0.5) * r * 0.7, Math.sin(el) * r, Math.cos(az) * Math.cos(el * 0.5) * r * 0.7];
   mix(DAY.hemiSky, NIGHT.hemiSky, t, out.hemi);
   mix(DAY.hemiGround, NIGHT.hemiGround, t, out.hemiGround);
-  out.hemiIntensity = MathUtils.lerp(0.3, 0.8, t);
+  out.hemiIntensity = MathUtils.lerp(0.12, 0.25, t);
   mix(DAY.asphalt, NIGHT.asphalt, t, out.asphalt);
   mix(DAY.line, NIGHT.line, t, out.line);
   mix(DAY.grass, NIGHT.grass, t, out.grass);
@@ -89,7 +89,7 @@ export function themeAt(d: number): Theme {
   out.lamps = MathUtils.smoothstep(1 - d, 0.25, 0.75);
   out.exposure = MathUtils.lerp(1.0, 1.15, 1 - t);
   out.bloom = MathUtils.lerp(0.18, 0.85, 1 - t);
-  out.envIntensity = MathUtils.lerp(0.85, 0.2, 1 - t);
+  out.envIntensity = MathUtils.lerp(0.9, 0.55, 1 - t);
   out.roughness = MathUtils.lerp(0.92, 0.6, 1 - t);
   return out;
 }

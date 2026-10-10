@@ -1,4 +1,4 @@
-import { Environment, Lightformer } from "@react-three/drei";
+import { ContactShadows, useEnvironment } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
@@ -201,10 +201,11 @@ function ParkedStyle({ body, cars }: { body: Body; cars: Parked[] }) {
       <instancedMesh ref={set(0)} userData={{ paint: true }} args={[parts.paint, instancedPaint, n]} castShadow receiveShadow />
       <instancedMesh ref={set(1)} args={[parts.glass, glassMat, n]} castShadow />
       <instancedMesh ref={set(2)} args={[parts.tires, carMaterials.tire, n]} castShadow />
-      <instancedMesh ref={set(3)} args={[parts.hubs, carMaterials.hub, n]} />
+      <instancedMesh ref={set(3)} args={[parts.rims, carMaterials.rim, n]} />
       <instancedMesh ref={set(4)} args={[parts.heads, sharedLights.head, n]} />
       <instancedMesh ref={set(5)} args={[parts.tails, sharedLights.tail, n]} />
-      {parts.bed && <instancedMesh ref={set(6)} args={[parts.bed, carMaterials.bed, n]} />}
+      <instancedMesh ref={set(6)} args={[parts.trim, carMaterials.trim, n]} castShadow />
+      {parts.bed && <instancedMesh ref={set(7)} args={[parts.bed, carMaterials.bed, n]} />}
     </>
   );
 }
@@ -232,6 +233,9 @@ function ThemeDriver() {
   scene.fog = fog;
   const starGeo = useMemo(stars, []);
   const dome = useRef<Object3D>(null);
+  // Real skies: Poly Haven HDRIs (CC0) light and reflect in every car, and show at the horizon.
+  const dayEnv = useEnvironment({ files: "/hdri/day.hdr" });
+  const nightEnv = useEnvironment({ files: "/hdri/night.hdr" });
   useFrame((state, dt) => {
     const s = lotStore;
     s.day = MathUtils.damp(s.day, s.dayTarget, 2.2, stepOf(dt));
@@ -250,7 +254,15 @@ function ThemeDriver() {
       hemi.current.groundColor.copy(t.hemiGround);
       hemi.current.intensity = t.hemiIntensity;
     }
-    scene.environmentIntensity = t.envIntensity;
+    const isDay = s.day > 0.5;
+    const env = isDay ? dayEnv : nightEnv;
+    // dip the intensity through dusk so swapping skies never pops
+    const dip = 0.2 + 0.8 * Math.min(1, Math.abs(s.day - 0.5) * 3);
+    scene.environment = env;
+    scene.background = env;
+    scene.backgroundBlurriness = 0.03;
+    scene.environmentIntensity = t.envIntensity * dip;
+    scene.backgroundIntensity = (isDay ? 1 : 0.9) * dip;
     gl.toneMappingExposure = t.exposure;
     mats.asphalt.color.copy(t.asphalt);
     mats.lot.color.copy(t.asphalt);
@@ -286,12 +298,7 @@ function ThemeDriver() {
         shadow-bias={-0.0004}
         shadow-normalBias={0.05}
       />
-      <group ref={dome}>
-        <mesh material={skyMat} renderOrder={-10}>
-          <sphereGeometry args={[290, 24, 16]} />
-        </mesh>
-        <points geometry={starGeo} material={starMat} />
-      </group>
+      <group ref={dome} />
     </>
   );
 }
@@ -301,14 +308,10 @@ function ThemeDriver() {
 export function LotScene({ reducedMotion, mobile }: { reducedMotion: boolean; mobile: boolean }) {
   return (
     <>
-      <ThemeDriver />
-      <Environment resolution={256} frames={1}>
-        <Lightformer form="rect" intensity={2.4} color="#ffffff" position={[0, 12, 0]} rotation-x={Math.PI / 2} scale={[40, 40, 1]} />
-        <Lightformer form="rect" intensity={1.2} color="#cfe3ff" position={[-14, 6, 0]} rotation-y={Math.PI / 2} scale={[30, 8, 1]} />
-        <Lightformer form="rect" intensity={1.0} color="#fff0dc" position={[14, 6, 0]} rotation-y={-Math.PI / 2} scale={[30, 8, 1]} />
-      </Environment>
       <Suspense fallback={null}>
+        <ThemeDriver />
         <Ground mobile={mobile} />
+        <ContactShadows position={[0, 0.02, 0]} scale={[66, 52]} resolution={2048} frames={1} far={2.4} blur={2.2} opacity={0.55} color="#000000" />
         <Building />
         <Parked />
         <Traffic />
