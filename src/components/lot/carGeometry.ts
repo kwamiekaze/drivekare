@@ -1,7 +1,7 @@
 import {
   BoxGeometry, BufferAttribute, BufferGeometry, CylinderGeometry, SphereGeometry, Float32BufferAttribute,
 } from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { mergeGeometries as mergeRaw } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { tireGeometry } from "../garage/Car";
 import type { Body } from "./layout";
 
@@ -12,6 +12,18 @@ import type { Body } from "./layout";
  * the floor. A second loft makes the glasshouse. Result: curved paint, tumblehome,
  * rounded noses and arches, instead of extruded boxes.
  */
+
+/** Merge after reducing every part to position and normal, so lofts and primitives are compatible. */
+function mergeGeometries(list: BufferGeometry[], _groups = false): BufferGeometry | null {
+  const clean = list.map((g) => {
+    const c = g.index ? g.toNonIndexed() : g.clone();
+    Object.keys(c.attributes).forEach((k) => {
+      if (k !== "position" && k !== "normal") c.deleteAttribute(k);
+    });
+    return c;
+  });
+  return mergeRaw(clean, false);
+}
 
 type Keys = ReadonlyArray<readonly [number, number]>;
 
@@ -190,7 +202,7 @@ export function wheelParts(r: number, w: number) {
   const cap = new CylinderGeometry(rimR * 0.2, rimR * 0.2, 0.05, 14).rotateX(Math.PI / 2);
   cap.translate(0, 0, w * 0.39);
   bits.push(cap);
-  const rim = mergeGeometries(bits.map((b) => (b.index ? b : b)), false)!;
+  const rim = mergeGeometries(bits)!;
   return { tire, rim };
 }
 
